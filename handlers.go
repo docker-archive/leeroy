@@ -109,7 +109,7 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pr := prHook.PullRequest
-	baseRepo := pr.Base.Repo.Owner.Login + pr.Base.Repo.Name
+	baseRepo := fmt.Sprintf("%s/%s", pr.Base.Repo.Owner.Login, pr.Base.Repo.Name)
 
 	log.Infof("Received GitHub pull request notification for %s %d (%s): %s", baseRepo, pr.Number, pr.Url, prHook.Action)
 

@@ -84,10 +84,10 @@ func main() {
 	mux := http.NewServeMux()
 
 	// jenkins notification endpoint
-	mux.HandleFunc("/notifications/jenkins", jenkinsHandler)
+	mux.HandleFunc("/notification/jenkins", jenkinsHandler)
 
 	// github webhooks endpoint
-	mux.HandleFunc("/notifications/github", githubHandler)
+	mux.HandleFunc("/notification/github", githubHandler)
 
 	// retry build endpoint
 	mux.HandleFunc("/build/retry", retryBuildHandler)
