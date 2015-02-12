@@ -48,7 +48,11 @@ Below is a sample leeroy config file:
             "context": "janky" // context to send to github for status (if you
             wanna stack em)
         }
-    ]
+    ],
+
+    // Basic Auth for endoints
+    "user": "USER",
+    "pass": "PASS"
 }
 ```
 

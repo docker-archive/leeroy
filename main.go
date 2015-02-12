@@ -32,6 +32,8 @@ type Config struct {
 	BuildCommits string         `json:"build_commits"`
 	GHToken      string         `json:"github_token"`
 	Builds       []Build        `json:"builds"`
+	User         string         `json:"user"`
+	Pass         string         `json:"pass"`
 }
 
 type Build struct {

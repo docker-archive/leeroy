@@ -47,7 +47,7 @@ func (c Config) updateGithubStatus(repoName, context, sha, state, desc, buildUrl
 	status := &octokat.StatusOptions{
 		State:       state,
 		Description: desc,
-		URL:         buildUrl + "console",
+		URL:         buildUrl,
 		Context:     context,
 	}
 	if _, err := gh.SetStatus(repo, sha, status); err != nil {
@@ -152,14 +152,14 @@ func (c Config) scheduleJenkinsBuild(baseRepo string, number int) error {
 	for _, sha := range shas {
 
 		// update the github status
-		if err := c.updateGithubStatus(baseRepo, build.Context, sha, "pending", "Jenkins build is being scheduled", ""); err != nil {
+		if err := c.updateGithubStatus(baseRepo, build.Context, sha, "pending", "Jenkins build is being scheduled", c.Jenkins.Baseurl); err != nil {
 			return err
 		}
 
 		// setup the jenkins client
 		j := &c.Jenkins
 		// setup the parameters
-		htmlUrl := fmt.Sprintf("https://github.com/%s/pull/%d")
+		htmlUrl := fmt.Sprintf("https://github.com/%s/pull/%d", baseRepo, pr.Number)
 		headRepo := fmt.Sprintf("%s/%s", pr.Head.Repo.Owner.Login, pr.Head.Repo.Name)
 		parameters := fmt.Sprintf("GIT_BASE_REPO=%s&GIT_HEAD_REPO=%s&GIT_SHA1=%s&GITHUB_URL=%s&PR=%d&BASE_BRANCH=%s", baseRepo, headRepo, sha, htmlUrl, pr.Number, pr.Base.Ref)
 		// schedule the build

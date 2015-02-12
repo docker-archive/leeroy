@@ -70,7 +70,7 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// update the github status
-	if err := config.updateGithubStatus(j.Build.Parameters.GitBaseRepo, build.Context, j.Build.Parameters.GitSha, state, desc, j.Build.Url); err != nil {
+	if err := config.updateGithubStatus(j.Build.Parameters.GitBaseRepo, build.Context, j.Build.Parameters.GitSha, state, desc, j.Build.Url+"console"); err != nil {
 		log.Error(err)
 	}
 
@@ -133,6 +133,17 @@ type retryBuild struct {
 }
 
 func retryBuildHandler(w http.ResponseWriter, r *http.Request) {
+	// setup auth
+	user, pass, ok := r.BasicAuth()
+	if !ok {
+		w.WriteHeader(401)
+		return
+	}
+	if user != config.User && pass != config.Pass {
+		w.WriteHeader(401)
+		return
+	}
+
 	if r.Method != "POST" {
 		fmt.Errorf("%q is not a valid method", r.Method)
 		w.WriteHeader(405)
@@ -152,6 +163,7 @@ func retryBuildHandler(w http.ResponseWriter, r *http.Request) {
 	if err := config.scheduleJenkinsBuild(b.Repo, b.Number); err != nil {
 		w.WriteHeader(500)
 		log.Error(err)
+		return
 	}
 
 	w.WriteHeader(204)
