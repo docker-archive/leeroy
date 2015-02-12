@@ -67,7 +67,7 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// get the build
-	build, err := getBuild(j.Build.Parameters.GitBaseRepo, builds)
+	build, err := config.getBuild(j.Build.Parameters.GitBaseRepo)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(204)
@@ -75,7 +75,7 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// update the github status
-	if err := updateGithubStatus(j.Build.Parameters.GitBaseRepo, build.Context, j.Build.Parameters.GitSha, state, desc, j.Build.Url); err != nil {
+	if err := config.updateGithubStatus(j.Build.Parameters.GitBaseRepo, build.Context, j.Build.Parameters.GitSha, state, desc, j.Build.Url); err != nil {
 		log.Error(err)
 	}
 
@@ -124,7 +124,7 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// schedule the jenkins build
-	if err := scheduleJenkinsBuild(baseRepo, pr.Number); err != nil {
+	if err := config.scheduleJenkinsBuild(baseRepo, pr.Number); err != nil {
 		log.Error(err)
 	}
 	return
@@ -160,7 +160,7 @@ func retryBuildHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// schedule the jenkins build
-	if err := scheduleJenkinsBuild(b.Repo, num); err != nil {
+	if err := config.scheduleJenkinsBuild(b.Repo, num); err != nil {
 		log.Error(err)
 	}
 

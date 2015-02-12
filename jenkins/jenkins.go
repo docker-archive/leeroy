@@ -8,9 +8,9 @@ import (
 )
 
 type Client struct {
-	Baseurl  string
-	username string
-	password string
+	Baseurl  string `json:"base_url"`
+	Username string `json:"username"`
+	Token    string `json:"token"`
 }
 
 type JenkinsResponse struct {
@@ -38,11 +38,11 @@ type Request struct {
 // Sets the authentication for the Jenkins client
 // Password can be an API token as described in:
 // https://wiki.jenkins-ci.org/display/JENKINS/Authenticating+scripted+clients
-func New(uri, username, password string) *Client {
+func New(uri, username, token string) *Client {
 	return &Client{
 		Baseurl:  uri,
-		username: username,
-		password: password,
+		Username: username,
+		Token:    token,
 	}
 }
 
@@ -61,7 +61,7 @@ func (c *Client) Build(job string, data Request) error {
 	}
 
 	// add the auth
-	req.SetBasicAuth(c.username, c.password)
+	req.SetBasicAuth(c.Username, c.Token)
 
 	// do the request
 	client := &http.Client{}
@@ -88,7 +88,7 @@ func (c *Client) BuildWithParameters(job string, parameters string) error {
 	}
 
 	// add the auth
-	req.SetBasicAuth(c.username, c.password)
+	req.SetBasicAuth(c.Username, c.Token)
 
 	// do the request
 	client := &http.Client{}

@@ -9,7 +9,6 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
-	"github.com/jfrazelle/leeroy/jenkins"
 )
 
 type Commit struct {
@@ -19,8 +18,8 @@ type Commit struct {
 	URL         string `json:"url,omitempty"`
 }
 
-func getBuild(baseRepo string, builds []Build) (build Build, err error) {
-	for _, build := range builds {
+func (c Config) getBuild(baseRepo string) (build Build, err error) {
+	for _, build := range c.Builds {
 		if build.Repo == baseRepo {
 			return build, nil
 		}
@@ -29,7 +28,7 @@ func getBuild(baseRepo string, builds []Build) (build Build, err error) {
 	return build, fmt.Errorf("Could not find config for %s", baseRepo)
 }
 
-func updateGithubStatus(repoName, context, sha, state, desc, buildUrl string) error {
+func (c Config) updateGithubStatus(repoName, context, sha, state, desc, buildUrl string) error {
 	// parse git repo for username
 	// and repo name
 	r := strings.SplitN(repoName, "/", 2)
@@ -39,7 +38,7 @@ func updateGithubStatus(repoName, context, sha, state, desc, buildUrl string) er
 
 	// initialize github client
 	gh := octokat.NewClient()
-	gh = gh.WithToken(ghtoken)
+	gh = gh.WithToken(c.GHToken)
 	repo := octokat.Repo{
 		Name:     r[1],
 		UserName: r[0],
@@ -75,10 +74,10 @@ func hasStatus(gh *octokat.Client, repo octokat.Repo, sha string) bool {
 	return false
 }
 
-func getShas(owner, name string, number int) (shas []string, pr *octokat.PullRequest, err error) {
+func (c Config) getShas(owner, name string, number int) (shas []string, pr *octokat.PullRequest, err error) {
 	// initialize github client
 	gh := octokat.NewClient()
-	gh = gh.WithToken(ghtoken)
+	gh = gh.WithToken(c.GHToken)
 	repo := octokat.Repo{
 		Name:     name,
 		UserName: owner,
@@ -92,7 +91,7 @@ func getShas(owner, name string, number int) (shas []string, pr *octokat.PullReq
 
 	// check which commits we want to get
 	// from the original flag --build-commits
-	if buildCommits == "all" || buildCommits == "new" {
+	if c.BuildCommits == "all" || c.BuildCommits == "new" {
 
 		// get the commits url
 		req, err := http.Get(pr.CommitsURL)
@@ -113,7 +112,7 @@ func getShas(owner, name string, number int) (shas []string, pr *octokat.PullReq
 			// if we only want the new shas
 			// check to make sure the status
 			// has not been set before appending
-			if buildCommits == "new" {
+			if c.BuildCommits == "new" {
 				if hasStatus(gh, repo, commit.Sha) {
 					continue
 				}
@@ -130,7 +129,7 @@ func getShas(owner, name string, number int) (shas []string, pr *octokat.PullReq
 	return shas, pr, nil
 }
 
-func scheduleJenkinsBuild(baseRepo string, number int) error {
+func (c Config) scheduleJenkinsBuild(baseRepo string, number int) error {
 	// parse git repo for username
 	// and repo name
 	r := strings.SplitN(baseRepo, "/", 2)
@@ -139,25 +138,25 @@ func scheduleJenkinsBuild(baseRepo string, number int) error {
 	}
 
 	// get the shas to build
-	shas, pr, err := getShas(r[0], r[1], number)
+	shas, pr, err := c.getShas(r[0], r[1], number)
 	if err != nil {
 		return err
 	}
 
 	for _, sha := range shas {
 		// get the build
-		build, err := getBuild(baseRepo, builds)
+		build, err := c.getBuild(baseRepo)
 		if err != nil {
 			return err
 		}
 
 		// update the github status
-		if err := updateGithubStatus(baseRepo, build.Context, sha, "pending", "Jenkins build is being scheduled", ""); err != nil {
+		if err := c.updateGithubStatus(baseRepo, build.Context, sha, "pending", "Jenkins build is being scheduled", ""); err != nil {
 			return err
 		}
 
 		// setup the jenkins client
-		j := jenkins.New(jenkinsUri, jenkinsUser, jenkinsPass)
+		j := &c.Jenkins
 		// setup the parameters
 		htmlUrl := fmt.Sprintf("https://github.com/%s/pull/%d")
 		headRepo := fmt.Sprintf("%s/%s", pr.Head.Repo.Owner.Login, pr.Head.Repo.Name)

@@ -9,6 +9,7 @@ import (
 	"os"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/jfrazelle/leeroy/jenkins"
 )
 
 const (
@@ -16,20 +17,22 @@ const (
 )
 
 var (
-	jenkinsUri   string
-	jenkinsUser  string
-	jenkinsPass  string
-	buildCommits string
-	ghtoken      string
-	certFile     string
-	keyFile      string
-	port         string
-	configFile   string
-	debug        bool
-	version      bool
+	certFile   string
+	keyFile    string
+	port       string
+	configFile string
+	debug      bool
+	version    bool
 
-	builds []Build
+	config Config
 )
+
+type Config struct {
+	Jenkins      jenkins.Client `json:"jenkins"`
+	BuildCommits string         `json:"build_commits"`
+	GHToken      string         `json:"github_token"`
+	Builds       []Build        `json:"builds"`
+}
 
 type Build struct {
 	Repo    string `json:"github_repo"`
@@ -42,11 +45,6 @@ func init() {
 	flag.BoolVar(&version, "version", false, "print version and exit")
 	flag.BoolVar(&version, "v", false, "print version and exit (shorthand)")
 	flag.BoolVar(&debug, "d", false, "run in debug mode")
-	flag.StringVar(&jenkinsUri, "jenkins-uri", "", "jenkins uri")
-	flag.StringVar(&jenkinsUser, "jenkins-user", "", "jenkins user")
-	flag.StringVar(&jenkinsPass, "jenkins-pass", "", "jenkins password")
-	flag.StringVar(&buildCommits, "build-commits", "", "commits to build per PR [all, new, last]")
-	flag.StringVar(&ghtoken, "gh-token", "", "github access token")
 	flag.StringVar(&certFile, "cert", "", "path to ssl certificate")
 	flag.StringVar(&keyFile, "key", "", "path to ssl key")
 	flag.StringVar(&port, "port", "80", "port to use")
@@ -70,12 +68,12 @@ func main() {
 		log.Errorf("config file does not exist: %s", configFile)
 		return
 	}
-	config, err := ioutil.ReadFile(configFile)
+	c, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		log.Errorf("could not read config file: %v", err)
 		return
 	}
-	if err := json.Unmarshal(config, &builds); err != nil {
+	if err := json.Unmarshal(c, &config); err != nil {
 		log.Errorf("error parsing config file as json: %v", err)
 		return
 	}
