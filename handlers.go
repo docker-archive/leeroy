@@ -88,7 +88,7 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 		return
 	case "pull_request":
-		continue
+		log.Debugf("Got a pull request hook")
 	default:
 		fmt.Errorf("Got unknown GitHub notification event type: %s", event)
 		return

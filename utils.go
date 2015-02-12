@@ -58,7 +58,7 @@ func (c Config) updateGithubStatus(repoName, context, sha, state, desc, buildUrl
 	return nil
 }
 
-func hasStatus(gh *octokat.Client, repo octokat.Repo, sha string) bool {
+func hasStatus(gh *octokat.Client, repo octokat.Repo, sha, context string) bool {
 	statuses, err := gh.Statuses(repo, sha, &octokat.Options{})
 	if err != nil {
 		log.Warnf("getting status for %s for %s/%s failed: %v", sha, repo.UserName, repo.Name, err)
@@ -66,7 +66,7 @@ func hasStatus(gh *octokat.Client, repo octokat.Repo, sha string) bool {
 	}
 
 	for _, status := range statuses {
-		if status.Context == Context && status.State == "success" {
+		if status.Context == context && status.State == "success" {
 			return true
 		}
 	}
@@ -74,7 +74,7 @@ func hasStatus(gh *octokat.Client, repo octokat.Repo, sha string) bool {
 	return false
 }
 
-func (c Config) getShas(owner, name string, number int) (shas []string, pr *octokat.PullRequest, err error) {
+func (c Config) getShas(owner, name, context string, number int) (shas []string, pr *octokat.PullRequest, err error) {
 	// initialize github client
 	gh := octokat.NewClient()
 	gh = gh.WithToken(c.GHToken)
@@ -113,7 +113,7 @@ func (c Config) getShas(owner, name string, number int) (shas []string, pr *octo
 			// check to make sure the status
 			// has not been set before appending
 			if c.BuildCommits == "new" {
-				if hasStatus(gh, repo, commit.Sha) {
+				if hasStatus(gh, repo, commit.Sha, context) {
 					continue
 				}
 			}
@@ -137,18 +137,19 @@ func (c Config) scheduleJenkinsBuild(baseRepo string, number int) error {
 		return fmt.Errorf("repo name could not be parsed: %s", baseRepo)
 	}
 
+	// get the build
+	build, err := c.getBuild(baseRepo)
+	if err != nil {
+		return err
+	}
+
 	// get the shas to build
-	shas, pr, err := c.getShas(r[0], r[1], number)
+	shas, pr, err := c.getShas(r[0], r[1], build.Context, number)
 	if err != nil {
 		return err
 	}
 
 	for _, sha := range shas {
-		// get the build
-		build, err := c.getBuild(baseRepo)
-		if err != nil {
-			return err
-		}
 
 		// update the github status
 		if err := c.updateGithubStatus(baseRepo, build.Context, sha, "pending", "Jenkins build is being scheduled", ""); err != nil {
