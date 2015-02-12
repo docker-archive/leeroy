@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/drone/go-github/github"
@@ -129,7 +128,7 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type retryBuild struct {
-	Number string `json:"number"`
+	Number int    `json:"number"`
 	Repo   string `json:"repo"`
 }
 
@@ -149,16 +148,8 @@ func retryBuildHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// FIXME: gordon bot should pass an int
-	num, err := strconv.Atoi(b.Number)
-	if err != nil {
-		log.Error(err)
-		w.WriteHeader(500)
-		return
-	}
-
 	// schedule the jenkins build
-	if err := config.scheduleJenkinsBuild(b.Repo, num); err != nil {
+	if err := config.scheduleJenkinsBuild(b.Repo, b.Number); err != nil {
 		w.WriteHeader(500)
 		log.Error(err)
 	}
