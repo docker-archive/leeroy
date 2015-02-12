@@ -9,7 +9,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/drone/go-github/github"
-	"github.com/jfrazelle/go-leeroy/jenkins"
+	"github.com/jfrazelle/leeroy/jenkins"
 )
 
 func jenkinsHandler(w http.ResponseWriter, r *http.Request) {

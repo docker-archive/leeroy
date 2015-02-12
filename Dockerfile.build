@@ -5,10 +5,10 @@ RUN go get github.com/Sirupsen/logrus && \
     go get github.com/crosbymichael/octokat && \
     go get github.com/drone/go-github/github
 
-ADD . /go/src/github.com/jfrazelle/go-leeroy
-RUN cd /go/src/github.com/jfrazelle/go-leeroy && go install . ./...
+ADD . /go/src/github.com/jfrazelle/leeroy
+RUN cd /go/src/github.com/jfrazelle/leeroy && go install . ./...
 ENV PATH $PATH:/go/bin
 
 EXPOSE 80
 
-ENTRYPOINT ["go-leeroy"]
+ENTRYPOINT ["leeroy"]
