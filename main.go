@@ -40,6 +40,7 @@ type Build struct {
 	Repo    string `json:"github_repo"`
 	Job     string `json:"jenkins_job_name"`
 	Context string `json:"context"`
+	Custom  bool   `json:"custom"`
 }
 
 func init() {

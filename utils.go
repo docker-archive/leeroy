@@ -18,14 +18,34 @@ type Commit struct {
 	URL         string `json:"url,omitempty"`
 }
 
-func (c Config) getBuild(baseRepo string) (build Build, err error) {
+func (c Config) getBuild(baseRepo string, isCustom bool) (build Build, err error) {
 	for _, build := range c.Builds {
-		if build.Repo == baseRepo {
+		if build.Repo == baseRepo && isCustom == build.Custom {
 			return build, nil
 		}
 	}
 
 	return build, fmt.Errorf("Could not find config for %s", baseRepo)
+}
+
+func (c Config) getBuildByJob(job string) (build Build, err error) {
+	for _, build := range c.Builds {
+		if build.Job == job {
+			return build, nil
+		}
+	}
+
+	return build, fmt.Errorf("Could not find config for %s", job)
+}
+
+func (c Config) getBuildByContext(context string) (build Build, err error) {
+	for _, build := range c.Builds {
+		if build.Context == context {
+			return build, nil
+		}
+	}
+
+	return build, fmt.Errorf("Could not find config for %s", context)
 }
 
 func (c Config) updateGithubStatus(repoName, context, sha, state, desc, buildUrl string) error {
@@ -129,18 +149,12 @@ func (c Config) getShas(owner, name, context string, number int) (shas []string,
 	return shas, pr, nil
 }
 
-func (c Config) scheduleJenkinsBuild(baseRepo string, number int) error {
+func (c Config) scheduleJenkinsBuild(baseRepo string, number int, build Build) error {
 	// parse git repo for username
 	// and repo name
 	r := strings.SplitN(baseRepo, "/", 2)
 	if len(r) < 2 {
 		return fmt.Errorf("repo name could not be parsed: %s", baseRepo)
-	}
-
-	// get the build
-	build, err := c.getBuild(baseRepo)
-	if err != nil {
-		return err
 	}
 
 	// get the shas to build

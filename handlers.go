@@ -63,7 +63,7 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// get the build
-	build, err := config.getBuild(j.Build.Parameters.GitBaseRepo)
+	build, err := config.getBuildByJob(j.Name)
 	if err != nil {
 		log.Error(err)
 		return
@@ -119,17 +119,27 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// get the build
+	build, err := config.getBuild(baseRepo, false)
+	if err != nil {
+		log.Error(err)
+		w.WriteHeader(500)
+		return
+	}
+
 	// schedule the jenkins build
-	if err := config.scheduleJenkinsBuild(baseRepo, pr.Number); err != nil {
+	if err := config.scheduleJenkinsBuild(baseRepo, pr.Number, build); err != nil {
 		log.Error(err)
 		w.WriteHeader(500)
 	}
+
 	return
 }
 
-type retryBuild struct {
-	Number int    `json:"number"`
-	Repo   string `json:"repo"`
+type requestBuild struct {
+	Number  int    `json:"number"`
+	Repo    string `json:"repo"`
+	Context string `json:"context"`
 }
 
 func retryBuildHandler(w http.ResponseWriter, r *http.Request) {
@@ -152,15 +162,23 @@ func retryBuildHandler(w http.ResponseWriter, r *http.Request) {
 
 	// decode the body
 	decoder := json.NewDecoder(r.Body)
-	var b retryBuild
+	var b requestBuild
 	if err := decoder.Decode(&b); err != nil {
 		log.Errorf("decoding the retry request as json failed: %v", err)
 		w.WriteHeader(500)
 		return
 	}
 
+	// get the build
+	build, err := config.getBuild(b.Repo, false)
+	if err != nil {
+		log.Error(err)
+		w.WriteHeader(500)
+		return
+	}
+
 	// schedule the jenkins build
-	if err := config.scheduleJenkinsBuild(b.Repo, b.Number); err != nil {
+	if err := config.scheduleJenkinsBuild(b.Repo, b.Number, build); err != nil {
 		w.WriteHeader(500)
 		log.Error(err)
 		return
@@ -171,6 +189,49 @@ func retryBuildHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func customBuildHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(405)
+	// setup auth
+	user, pass, ok := r.BasicAuth()
+	if !ok {
+		w.WriteHeader(401)
+		return
+	}
+	if user != config.User && pass != config.Pass {
+		w.WriteHeader(401)
+		return
+	}
+
+	if r.Method != "POST" {
+		fmt.Errorf("%q is not a valid method", r.Method)
+		w.WriteHeader(405)
+		return
+	}
+
+	// decode the body
+	decoder := json.NewDecoder(r.Body)
+	var b requestBuild
+	if err := decoder.Decode(&b); err != nil {
+		log.Errorf("decoding the retry request as json failed: %v", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	// get the build
+	build, err := config.getBuildByContext(b.Context)
+	if err != nil {
+		log.Error(err)
+		w.WriteHeader(500)
+		return
+	}
+
+	// schedule the jenkins build
+	if err := config.scheduleJenkinsBuild(b.Repo, b.Number, build); err != nil {
+		w.WriteHeader(500)
+		log.Error(err)
+		return
+	}
+
+	w.WriteHeader(204)
+	return
+
 	return
 }
