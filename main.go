@@ -16,7 +16,6 @@ const (
 )
 
 var (
-	serverUri    string
 	jenkinsUri   string
 	jenkinsUser  string
 	jenkinsPass  string
@@ -24,18 +23,18 @@ var (
 	ghtoken      string
 	certFile     string
 	keyFile      string
+	port         string
 	configFile   string
 	debug        bool
 	version      bool
 
 	builds []Build
-
-	Context string = "janky"
 )
 
 type Build struct {
-	Repo string `json:"github_repo"`
-	Job  string `json:"jenkins_job_name"`
+	Repo    string `json:"github_repo"`
+	Job     string `json:"jenkins_job_name"`
+	Context string `json:"context"`
 }
 
 func init() {
@@ -43,7 +42,6 @@ func init() {
 	flag.BoolVar(&version, "version", false, "print version and exit")
 	flag.BoolVar(&version, "v", false, "print version and exit (shorthand)")
 	flag.BoolVar(&debug, "d", false, "run in debug mode")
-	flag.StringVar(&serverUri, "server-uri", "", "server uri for this instance of leeroy")
 	flag.StringVar(&jenkinsUri, "jenkins-uri", "", "jenkins uri")
 	flag.StringVar(&jenkinsUser, "jenkins-user", "", "jenkins user")
 	flag.StringVar(&jenkinsPass, "jenkins-pass", "", "jenkins password")
@@ -51,6 +49,7 @@ func init() {
 	flag.StringVar(&ghtoken, "gh-token", "", "github access token")
 	flag.StringVar(&certFile, "cert", "", "path to ssl certificate")
 	flag.StringVar(&keyFile, "key", "", "path to ssl key")
+	flag.StringVar(&port, "port", "80", "port to use")
 	flag.StringVar(&configFile, "config", "/etc/leeroy/config.json", "path to config file")
 	flag.Parse()
 }
@@ -85,16 +84,16 @@ func main() {
 	mux := http.NewServeMux()
 
 	// jenkins notification endpoint
-	mux.Handle("/notifications/jenkins", jenkinsHandler)
+	mux.HandleFunc("/notifications/jenkins", jenkinsHandler)
 
 	// github webhooks endpoint
-	mux.Handle("/notifications/github", githubHandler)
+	mux.HandleFunc("/notifications/github", githubHandler)
 
 	// retry build endpoint
-	mux.Handle("/build/retry", retryBuildHandler)
+	mux.HandleFunc("/build/retry", retryBuildHandler)
 
 	// custom build endpoint
-	mux.Handle("/build/custom", customBuildHandler)
+	mux.HandleFunc("/build/custom", customBuildHandler)
 
 	// set up the server
 	server := &http.Server{
@@ -102,7 +101,7 @@ func main() {
 		Handler: mux,
 	}
 
-	log.Printf("Starting server on port %q with baseuri %q", port, baseuri)
+	log.Printf("Starting server on port %q", port)
 	if certFile != "" && keyFile != "" {
 		log.Fatal(server.ListenAndServeTLS(certFile, keyFile))
 	} else {

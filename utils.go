@@ -9,7 +9,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
-	"github.com/drone/go-github/github"
+	"github.com/jfrazelle/go-leeroy/jenkins"
 )
 
 type Commit struct {
@@ -29,7 +29,7 @@ func getBuild(baseRepo string, builds []Build) (build Build, err error) {
 	return build, fmt.Errorf("Could not find config for %s", baseRepo)
 }
 
-func updateGithubStatus(repoName, sha, state, desc, buildUrl string) error {
+func updateGithubStatus(repoName, context, sha, state, desc, buildUrl string) error {
 	// parse git repo for username
 	// and repo name
 	r := strings.SplitN(repoName, "/", 2)
@@ -49,7 +49,7 @@ func updateGithubStatus(repoName, sha, state, desc, buildUrl string) error {
 		State:       state,
 		Description: desc,
 		URL:         buildUrl + "console",
-		Context:     Context,
+		Context:     context,
 	}
 	if _, err := gh.SetStatus(repo, sha, status); err != nil {
 		return fmt.Errorf("setting status for repo: %s, sha: %s failed: %v", repoName, sha, err)
@@ -67,7 +67,7 @@ func hasStatus(gh *octokat.Client, repo octokat.Repo, sha string) bool {
 	}
 
 	for _, status := range statuses {
-		if status.Context == Context && state == "success" {
+		if status.Context == Context && status.State == "success" {
 			return true
 		}
 	}
@@ -75,7 +75,7 @@ func hasStatus(gh *octokat.Client, repo octokat.Repo, sha string) bool {
 	return false
 }
 
-func getShas(owner, name string, number int) (shas []string, err error) {
+func getShas(owner, name string, number int) (shas []string, pr *octokat.PullRequest, err error) {
 	// initialize github client
 	gh := octokat.NewClient()
 	gh = gh.WithToken(ghtoken)
@@ -85,9 +85,9 @@ func getShas(owner, name string, number int) (shas []string, err error) {
 	}
 
 	// get the pull request so we can get the commits
-	pr, err := gh.PullRequest(repo, strconv.Itoa(number), &octokat.Options{})
+	pr, err = gh.PullRequest(repo, strconv.Itoa(number), &octokat.Options{})
 	if err != nil {
-		return shas, fmt.Errorf("getting pull request %d for %s/%s failed: %v", number, owner, name, err)
+		return shas, pr, fmt.Errorf("getting pull request %d for %s/%s failed: %v", number, owner, name, err)
 	}
 
 	// check which commits we want to get
@@ -97,7 +97,7 @@ func getShas(owner, name string, number int) (shas []string, err error) {
 		// get the commits url
 		req, err := http.Get(pr.CommitsURL)
 		if err != nil {
-			return shas, err
+			return shas, pr, err
 		}
 		defer req.Body.Close()
 
@@ -105,7 +105,7 @@ func getShas(owner, name string, number int) (shas []string, err error) {
 		var commits []Commit
 		decoder := json.NewDecoder(req.Body)
 		if err := decoder.Decode(&commits); err != nil {
-			return shas, fmt.Errorf("parsing the response from %s failed: %v", pr.CommitsURL, err)
+			return shas, pr, fmt.Errorf("parsing the response from %s failed: %v", pr.CommitsURL, err)
 		}
 
 		// append the commit shas
@@ -127,25 +127,45 @@ func getShas(owner, name string, number int) (shas []string, err error) {
 		shas = append(shas, pr.Head.Sha)
 	}
 
-	return shas, nil
+	return shas, pr, nil
 }
 
-func scheduleJenkinsBuild(baseRepo string, pr *github.PullRequest) error {
+func scheduleJenkinsBuild(baseRepo string, number int) error {
+	// parse git repo for username
+	// and repo name
+	r := strings.SplitN(baseRepo, "/", 2)
+	if len(r) < 2 {
+		return fmt.Errorf("repo name could not be parsed: %s", baseRepo)
+	}
+
 	// get the shas to build
-	shas, err := getShas(pr.Base.Repo.Owner.Login, pr.Base.Repo.Name, pr.Number)
+	shas, pr, err := getShas(r[0], r[1], number)
 	if err != nil {
 		return err
 	}
 
 	for _, sha := range shas {
-		// update the github status
-		if err := updateGithubStatus(baseRepo, sha, "pending", "Jenkins build is being scheduled", ""); err != nil {
-			log.Error(err)
+		// get the build
+		build, err := getBuild(baseRepo, builds)
+		if err != nil {
+			return err
 		}
 
-		// schedule the build
-		build, err := getBuild(baseRepo)
+		// update the github status
+		if err := updateGithubStatus(baseRepo, build.Context, sha, "pending", "Jenkins build is being scheduled", ""); err != nil {
+			return err
+		}
 
+		// setup the jenkins client
+		j := jenkins.New(jenkinsUri, jenkinsUser, jenkinsPass)
+		// setup the parameters
+		htmlUrl := fmt.Sprintf("https://github.com/%s/pull/%d")
+		headRepo := fmt.Sprintf("%s/%s", pr.Head.Repo.Owner.Login, pr.Head.Repo.Name)
+		parameters := fmt.Sprintf("GIT_BASE_REPO=%s&GIT_HEAD_REPO=%s&GIT_SHA1=%s&GITHUB_URL=%s&PR=%d&BASE_BRANCH=%s", baseRepo, headRepo, sha, htmlUrl, pr.Number, pr.Base.Ref)
+		// schedule the build
+		if err := j.BuildWithParameters(build.Job, parameters); err != nil {
+			return fmt.Errorf("scheduling jenkins build failed: %v", err)
+		}
 	}
 
 	return nil

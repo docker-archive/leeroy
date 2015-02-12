@@ -9,4 +9,6 @@ ADD . /go/src/github.com/jfrazelle/go-leeroy
 RUN cd /go/src/github.com/jfrazelle/go-leeroy && go install . ./...
 ENV PATH $PATH:/go/bin
 
+EXPOSE 80
+
 ENTRYPOINT ["go-leeroy"]

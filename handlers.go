@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/drone/go-github/github"
@@ -12,8 +13,6 @@ import (
 )
 
 func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	if r.Method != "POST" {
 		fmt.Errorf("%q is not a valid method", r.Method)
 		w.WriteHeader(405)
@@ -24,7 +23,7 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var j jenkins.JenkinsResponse
 	if err := decoder.Decode(&j); err != nil {
-		log.Errorf("decoding the jenkins response as json failed: %v", err)
+		log.Errorf("decoding the jenkins request as json failed: %v", err)
 		w.WriteHeader(204)
 		return
 	}
@@ -67,9 +66,16 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	// get the build
+	build, err := getBuild(j.Build.Parameters.GitBaseRepo, builds)
+	if err != nil {
+		log.Error(err)
+		w.WriteHeader(204)
+		return
+	}
 
 	// update the github status
-	if err := updateGithubStatus(j.Build.Parameters.GitBaseRepo, j.Build.Parameters.GitSha, state, desc, j.Build.Url); err != nil {
+	if err := updateGithubStatus(j.Build.Parameters.GitBaseRepo, build.Context, j.Build.Parameters.GitSha, state, desc, j.Build.Url); err != nil {
 		log.Error(err)
 	}
 
@@ -118,8 +124,51 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// schedule the jenkins build
-	if err := scheduleJenkinsBuild(baseRepo, pr); err != nil {
+	if err := scheduleJenkinsBuild(baseRepo, pr.Number); err != nil {
 		log.Error(err)
 	}
+	return
+}
+
+type retryBuild struct {
+	Number string `json:"number"`
+	Repo   string `json:"repo"`
+}
+
+func retryBuildHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		fmt.Errorf("%q is not a valid method", r.Method)
+		w.WriteHeader(405)
+		return
+	}
+
+	// decode the body
+	decoder := json.NewDecoder(r.Body)
+	var b retryBuild
+	if err := decoder.Decode(&b); err != nil {
+		log.Errorf("decoding the retry request as json failed: %v", err)
+		w.WriteHeader(204)
+		return
+	}
+
+	// FIXME: gordon bot should pass an int
+	num, err := strconv.Atoi(b.Number)
+	if err != nil {
+		log.Error(err)
+		w.WriteHeader(204)
+		return
+	}
+
+	// schedule the jenkins build
+	if err := scheduleJenkinsBuild(b.Repo, num); err != nil {
+		log.Error(err)
+	}
+
+	w.WriteHeader(204)
+	return
+}
+
+func customBuildHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(405)
 	return
 }
