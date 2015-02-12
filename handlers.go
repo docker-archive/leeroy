@@ -24,7 +24,6 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	var j jenkins.JenkinsResponse
 	if err := decoder.Decode(&j); err != nil {
 		log.Errorf("decoding the jenkins request as json failed: %v", err)
-		w.WriteHeader(204)
 		return
 	}
 
@@ -33,7 +32,6 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	// if the phase is not started or completed
 	// we don't care
 	if j.Build.Phase != "STARTED" && j.Build.Phase != "COMPLETED" {
-		w.WriteHeader(204)
 		return
 	}
 
@@ -62,7 +60,6 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 			desc += " has encountered an error"
 		default:
 			log.Errorf("Did not understand %q build status. Aborting.", j.Build.Status)
-			w.WriteHeader(204)
 			return
 		}
 	}
@@ -70,7 +67,6 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	build, err := config.getBuild(j.Build.Parameters.GitBaseRepo)
 	if err != nil {
 		log.Error(err)
-		w.WriteHeader(204)
 		return
 	}
 
@@ -79,7 +75,6 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 	}
 
-	w.WriteHeader(204)
 	return
 }
 
@@ -104,11 +99,13 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Errorf("Error reading github handler body: %v", err)
+		w.WriteHeader(500)
 		return
 	}
 	prHook, err := github.ParsePullRequestHook(body)
 	if err != nil {
 		log.Errorf("Error parsing hook: %v", err)
+		w.WriteHeader(500)
 		return
 	}
 
@@ -126,6 +123,7 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 	// schedule the jenkins build
 	if err := config.scheduleJenkinsBuild(baseRepo, pr.Number); err != nil {
 		log.Error(err)
+		w.WriteHeader(500)
 	}
 	return
 }
@@ -147,7 +145,7 @@ func retryBuildHandler(w http.ResponseWriter, r *http.Request) {
 	var b retryBuild
 	if err := decoder.Decode(&b); err != nil {
 		log.Errorf("decoding the retry request as json failed: %v", err)
-		w.WriteHeader(204)
+		w.WriteHeader(500)
 		return
 	}
 
@@ -155,12 +153,13 @@ func retryBuildHandler(w http.ResponseWriter, r *http.Request) {
 	num, err := strconv.Atoi(b.Number)
 	if err != nil {
 		log.Error(err)
-		w.WriteHeader(204)
+		w.WriteHeader(500)
 		return
 	}
 
 	// schedule the jenkins build
 	if err := config.scheduleJenkinsBuild(b.Repo, num); err != nil {
+		w.WriteHeader(500)
 		log.Error(err)
 	}
 
