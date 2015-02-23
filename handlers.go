@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/drone/go-github/github"
+	"github.com/crosbymichael/octokat"
 	"github.com/jfrazelle/leeroy/jenkins"
 )
 
@@ -106,7 +106,7 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 		return
 	}
-	prHook, err := github.ParsePullRequestHook(body)
+	prHook, err := octokat.ParsePullRequestHook(body)
 	if err != nil {
 		log.Errorf("Error parsing hook: %v", err)
 		w.WriteHeader(500)
@@ -116,7 +116,7 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 	pr := prHook.PullRequest
 	baseRepo := fmt.Sprintf("%s/%s", pr.Base.Repo.Owner.Login, pr.Base.Repo.Name)
 
-	log.Infof("Received GitHub pull request notification for %s %d (%s): %s", baseRepo, pr.Number, pr.Url, prHook.Action)
+	log.Infof("Received GitHub pull request notification for %s %d (%s): %s", baseRepo, pr.Number, pr.URL, prHook.Action)
 
 	// ignore everything we don't care about
 	if prHook.Action != "opened" && prHook.Action != "reopened" && prHook.Action != "synchronize" {
