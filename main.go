@@ -84,6 +84,9 @@ func main() {
 	// create mux server
 	mux := http.NewServeMux()
 
+	// ping endpoint
+	mux.HandleFunc("/ping", pingHandler)
+
 	// jenkins notification endpoint
 	mux.HandleFunc("/notification/jenkins", jenkinsHandler)
 

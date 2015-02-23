@@ -11,6 +11,11 @@ import (
 	"github.com/jfrazelle/leeroy/jenkins"
 )
 
+func pingHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "pong")
+	return
+}
+
 func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		fmt.Errorf("%q is not a valid method", r.Method)
