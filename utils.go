@@ -18,14 +18,18 @@ type Commit struct {
 	URL         string `json:"url,omitempty"`
 }
 
-func (c Config) getBuild(baseRepo string, isCustom bool) (build Build, err error) {
+func (c Config) getBuilds(baseRepo string, isCustom bool) (builds []Build, err error) {
 	for _, build := range c.Builds {
 		if build.Repo == baseRepo && isCustom == build.Custom {
-			return build, nil
+			builds = append(builds, build)
 		}
 	}
 
-	return build, fmt.Errorf("Could not find config for %s", baseRepo)
+	if len(builds) <= 0 {
+		return builds, fmt.Errorf("Could not find config for %s", baseRepo)
+	}
+
+	return builds, nil
 }
 
 func (c Config) getBuildByJob(job string) (build Build, err error) {
@@ -39,6 +43,10 @@ func (c Config) getBuildByJob(job string) (build Build, err error) {
 }
 
 func (c Config) getBuildByContext(context string) (build Build, err error) {
+	if context == "" {
+		context = DEFAULTCONTEXT
+	}
+
 	for _, build := range c.Builds {
 		if build.Context == context {
 			return build, nil

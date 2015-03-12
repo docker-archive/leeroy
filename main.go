@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	VERSION = "v0.1.0"
+	VERSION        = "v0.1.0"
+	DEFAULTCONTEXT = "janky"
 )
 
 var (
@@ -94,7 +95,7 @@ func main() {
 	mux.HandleFunc("/notification/github", githubHandler)
 
 	// retry build endpoint
-	mux.HandleFunc("/build/retry", retryBuildHandler)
+	mux.HandleFunc("/build/retry", customBuildHandler)
 
 	// custom build endpoint
 	mux.HandleFunc("/build/custom", customBuildHandler)

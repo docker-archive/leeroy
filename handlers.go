@@ -124,18 +124,20 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get the build
-	build, err := config.getBuild(baseRepo, false)
+	// get the builds
+	builds, err := config.getBuilds(baseRepo, false)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(500)
 		return
 	}
 
-	// schedule the jenkins build
-	if err := config.scheduleJenkinsBuild(baseRepo, pr.Number, build); err != nil {
-		log.Error(err)
-		w.WriteHeader(500)
+	// schedule the jenkins builds
+	for _, build := range builds {
+		if err := config.scheduleJenkinsBuild(baseRepo, pr.Number, build); err != nil {
+			log.Error(err)
+			w.WriteHeader(500)
+		}
 	}
 
 	return
@@ -145,52 +147,6 @@ type requestBuild struct {
 	Number  int    `json:"number"`
 	Repo    string `json:"repo"`
 	Context string `json:"context"`
-}
-
-func retryBuildHandler(w http.ResponseWriter, r *http.Request) {
-	// setup auth
-	user, pass, ok := r.BasicAuth()
-	if !ok {
-		w.WriteHeader(401)
-		return
-	}
-	if user != config.User && pass != config.Pass {
-		w.WriteHeader(401)
-		return
-	}
-
-	if r.Method != "POST" {
-		fmt.Errorf("%q is not a valid method", r.Method)
-		w.WriteHeader(405)
-		return
-	}
-
-	// decode the body
-	decoder := json.NewDecoder(r.Body)
-	var b requestBuild
-	if err := decoder.Decode(&b); err != nil {
-		log.Errorf("decoding the retry request as json failed: %v", err)
-		w.WriteHeader(500)
-		return
-	}
-
-	// get the build
-	build, err := config.getBuild(b.Repo, false)
-	if err != nil {
-		log.Error(err)
-		w.WriteHeader(500)
-		return
-	}
-
-	// schedule the jenkins build
-	if err := config.scheduleJenkinsBuild(b.Repo, b.Number, build); err != nil {
-		w.WriteHeader(500)
-		log.Error(err)
-		return
-	}
-
-	w.WriteHeader(204)
-	return
 }
 
 func customBuildHandler(w http.ResponseWriter, r *http.Request) {
@@ -236,7 +192,5 @@ func customBuildHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(204)
-	return
-
 	return
 }
