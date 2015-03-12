@@ -82,7 +82,7 @@ func (c Config) updateGithubStatus(repoName, context, sha, state, desc, buildUrl
 		return fmt.Errorf("setting status for repo: %s, sha: %s failed: %v", repoName, sha, err)
 	}
 
-	log.Infof("Setting status on %s %s to %s succeeded", repoName, sha, state)
+	log.Infof("Setting status on %s %s to %s for %s succeeded", repoName, sha, state, context)
 	return nil
 }
 

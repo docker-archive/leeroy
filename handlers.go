@@ -50,7 +50,6 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 
 		switch j.Build.Status {
 		case "SUCCESS":
-
 			state = "success"
 			desc += " has succeeded"
 		case "FAILURE":
