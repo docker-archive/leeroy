@@ -176,7 +176,7 @@ func customBuildHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the build
-	build, err := config.getBuildByContext(b.Context)
+	build, err := config.getBuildByContextAndRepo(b.Context, b.Repo)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(500)

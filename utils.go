@@ -42,18 +42,18 @@ func (c Config) getBuildByJob(job string) (build Build, err error) {
 	return build, fmt.Errorf("Could not find config for %s", job)
 }
 
-func (c Config) getBuildByContext(context string) (build Build, err error) {
+func (c Config) getBuildByContextAndRepo(context, repo string) (build Build, err error) {
 	if context == "" {
 		context = DEFAULTCONTEXT
 	}
 
 	for _, build := range c.Builds {
-		if build.Context == context {
+		if build.Context == context && build.Repo == repo {
 			return build, nil
 		}
 	}
 
-	return build, fmt.Errorf("Could not find config for %s", context)
+	return build, fmt.Errorf("Could not find config for context: %s, repo: %s", context, repo)
 }
 
 func (c Config) updateGithubStatus(repoName, context, sha, state, desc, buildUrl string) error {
