@@ -192,3 +192,39 @@ func (c Config) scheduleJenkinsBuild(baseRepo string, number int, build Build) e
 
 	return nil
 }
+
+func (c Config) getFailedPRs(context, repoName string) (nums []int, err error) {
+	// parse git repo for username
+	// and repo name
+	r := strings.SplitN(repoName, "/", 2)
+	if len(r) < 2 {
+		return nums, fmt.Errorf("repo name could not be parsed: %s", repoName)
+	}
+
+	// initialize github client
+	gh := octokat.NewClient()
+	gh = gh.WithToken(c.GHToken)
+	repo := octokat.Repo{
+		Name:     r[1],
+		UserName: r[0],
+	}
+
+	// get pull requests
+	prs, err := gh.PullRequests(repo, &octokat.Options{
+		Params: map[string]string{
+			"state":    "open",
+			"per_page": "100",
+		},
+	})
+	if err != nil {
+		return nums, fmt.Errorf("requesting open repos for %s failed: %v", repoName, err)
+	}
+
+	for _, pr := range prs {
+		if !hasStatus(gh, repo, pr.Head.Sha, context) {
+			nums = append(nums, pr.Number)
+		}
+	}
+
+	return nums, nil
+}

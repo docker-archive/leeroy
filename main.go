@@ -100,6 +100,9 @@ func main() {
 	// custom build endpoint
 	mux.HandleFunc("/build/custom", customBuildHandler)
 
+	// cron endpoint to reschedule bulk jobs
+	mux.HandleFunc("/build/cron", cronBuildHandler)
+
 	// set up the server
 	server := &http.Server{
 		Addr:    ":" + port,

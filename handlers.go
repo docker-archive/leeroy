@@ -193,3 +193,57 @@ func customBuildHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(204)
 	return
 }
+
+func cronBuildHandler(w http.ResponseWriter, r *http.Request) {
+	// setup auth
+	user, pass, ok := r.BasicAuth()
+	if !ok {
+		w.WriteHeader(401)
+		return
+	}
+	if user != config.User && pass != config.Pass {
+		w.WriteHeader(401)
+		return
+	}
+
+	if r.Method != "POST" {
+		fmt.Errorf("%q is not a valid method", r.Method)
+		w.WriteHeader(405)
+		return
+	}
+
+	// decode the body
+	decoder := json.NewDecoder(r.Body)
+	var b requestBuild
+	if err := decoder.Decode(&b); err != nil {
+		log.Errorf("decoding the retry request as json failed: %v", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	// get the build
+	build, err := config.getBuildByContextAndRepo(b.Context, b.Repo)
+	if err != nil {
+		log.Error(err)
+		w.WriteHeader(500)
+		return
+	}
+
+	// get PRs that have failed for the context
+	nums, err := config.getFailedPRs(b.Context, b.Repo)
+	if err != nil {
+		log.Error(err)
+		w.WriteHeader(500)
+		return
+	}
+
+	for _, prNum := range nums {
+		// schedule the jenkins build
+		if err := config.scheduleJenkinsBuild(b.Repo, prNum, build); err != nil {
+			log.Error(err)
+		}
+	}
+
+	w.WriteHeader(204)
+	return
+}
