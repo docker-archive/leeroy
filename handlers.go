@@ -8,6 +8,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
+	"github.com/jfrazelle/leeroy/github"
 	"github.com/jfrazelle/leeroy/jenkins"
 )
 
@@ -87,17 +88,17 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 	switch event {
 	case "":
 		log.Error("Got GitHub notification without a type")
-		return
 	case "ping":
 		w.WriteHeader(200)
-		return
 	case "pull_request":
-		log.Debugf("Got a pull request hook")
+		handlePullRequest(w, r)
 	default:
 		fmt.Errorf("Got unknown GitHub notification event type: %s", event)
-		return
 	}
+}
 
+func handlePullRequest(w http.ResponseWriter, r *http.Request) {
+	log.Debugf("Got a pull request hook")
 	// parse the pull request
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -123,6 +124,21 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	g := github.GitHub{config.GHToken}
+	valid, err := g.DcoVerified(prHook)
+
+	if err != nil {
+		log.Errorf("Error validating DCO: %v", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	// DCO not valid, we don't start the build
+	if !valid {
+		w.WriteHeader(200)
+		return
+	}
+
 	// get the builds
 	builds, err := config.getBuilds(baseRepo, false)
 	if err != nil {
@@ -138,8 +154,6 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(500)
 		}
 	}
-
-	return
 }
 
 type requestBuild struct {
