@@ -1,13 +1,11 @@
 package github
 
 import (
-	"bytes"
-	"errors"
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
 )
 
@@ -16,8 +14,10 @@ var (
 )
 
 type pullRequestContent struct {
-	files   []*octokat.PullRequestFile
-	commits []octokat.Commit
+	id       int
+	files    []*octokat.PullRequestFile
+	commits  []octokat.Commit
+	comments []octokat.Comment
 }
 
 func (p *pullRequestContent) IsDocsOnly() bool {
@@ -48,47 +48,51 @@ func (p *pullRequestContent) CommitsSigned() bool {
 	return true
 }
 
+func (p *pullRequestContent) AlreadyCommented(commentType string) bool {
+	for _, c := range p.comments {
+		// if we already made the comment return nil
+		if strings.ToLower(c.User.Login) == "gordontheturtle" && strings.Contains(c.Body, commentType) {
+			log.Debugf("Already made comment about %q on PR %s", commentType, p.id)
+			return true
+		}
+	}
+	return false
+}
+
+func (p *pullRequestContent) FindComment(commentType string) *octokat.Comment {
+	for _, c := range p.comments {
+		if strings.ToLower(c.User.Login) == "gordontheturtle" && strings.Contains(c.Body, commentType) {
+			return &c
+		}
+	}
+	return nil
+}
+
 func (g *GitHub) getPullRequestContent(repo octokat.Repo, prId int) (*pullRequestContent, error) {
 	var (
-		errs    []error
-		wg      sync.WaitGroup
-		commits []octokat.Commit
-		files   []*octokat.PullRequestFile
+		files    []*octokat.PullRequestFile
+		commits  []octokat.Commit
+		comments []octokat.Comment
+		err      error
 	)
-
 	n := strconv.Itoa(prId)
 
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-
-		var err error
-		commits, err = g.Client().Commits(repo, n, nil)
-		if err != nil {
-			errs = append(errs, err)
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-
-		var err error
-		files, err = g.Client().PullRequestFiles(repo, n, nil)
-		if err != nil {
-			errs = append(errs, err)
-		}
-	}()
-
-	wg.Wait()
-
-	if len(errs) > 0 {
-		b := bytes.NewBufferString("")
-		for _, e := range errs {
-			b.WriteString(e.Error())
-		}
-
-		return nil, errors.New(b.String())
+	if commits, err = g.Client().Commits(repo, n, &octokat.Options{}); err != nil {
+		return nil, err
 	}
 
-	return &pullRequestContent{files, commits}, nil
+	if files, err = g.Client().PullRequestFiles(repo, n, &octokat.Options{}); err != nil {
+		return nil, err
+	}
+
+	if comments, err = g.Client().Comments(repo, n, &octokat.Options{}); err != nil {
+		return nil, err
+	}
+
+	return &pullRequestContent{
+		id:       prId,
+		files:    files,
+		commits:  commits,
+		comments: comments,
+	}, nil
 }

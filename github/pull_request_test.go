@@ -58,3 +58,55 @@ func TestFilesAreDocs(t *testing.T) {
 		}
 	}
 }
+
+func TestAlreadyCommented(t *testing.T) {
+	cases := []struct {
+		login string
+		body  string
+		exp   bool
+	}{
+		{
+			"calavera",
+			"sign your commits",
+			false,
+		},
+		{
+			"calavera",
+			":+1:",
+			false,
+		},
+		{
+			"gordontheturtle",
+			"rebase your commits",
+			false,
+		},
+		{
+			"gordontheturtle",
+			"sign your commits",
+			true,
+		},
+	}
+
+	for _, c := range cases {
+		comments := []octokat.Comment{
+			octokat.Comment{
+				User: octokat.User{
+					Login: c.login,
+				},
+				Body: c.body,
+			},
+		}
+
+		pr := &pullRequestContent{comments: comments}
+		if done := pr.AlreadyCommented("sign your commits"); done != c.exp {
+			t.Fatalf("Expected commented %v, but was %v for user %s and body %s\n", c.exp, done, c.login, c.body)
+		}
+
+		comment := pr.FindComment("sign your commits")
+		found := comment != nil
+
+		if found != c.exp {
+			t.Fatalf("Expected found %v, but was %v for user %s and body %s\n", c.exp, found, c.login, c.body)
+		}
+	}
+}

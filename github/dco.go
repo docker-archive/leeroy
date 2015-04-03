@@ -49,12 +49,17 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 	}
 
 	var verified bool
+
 	if content.CommitsSigned() {
 		if err := g.toggleLabels(repo, prHook.Number, "dco/no", "dco/yes"); err != nil {
 			return false, err
 		}
 
-		if err := g.successStatus(repo, pr.Head.Sha, "docker-dco", "All commits signed"); err != nil {
+		if err := g.removeDCOUnsignedComment(repo, pr, content); err != nil {
+			return false, err
+		}
+
+		if err := g.successStatus(repo, pr.Head.Sha, "docker/dco-signed", "All commits signed"); err != nil {
 			return false, err
 		}
 
@@ -64,7 +69,11 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 			return false, err
 		}
 
-		if err := g.failureStatus(repo, pr.Head.Sha, "docker-dco", "Some commits without signature", "https://github.com/docker/docker/blob/master/CONTRIBUTING.md#sign-your-work"); err != nil {
+		if err := g.addDCOUnsignedComment(repo, pr, content); err != nil {
+			return false, err
+		}
+
+		if err := g.failureStatus(repo, pr.Head.Sha, "docker/dco-signed", "Some commits without signature", "https://github.com/docker/docker/blob/master/CONTRIBUTING.md#sign-your-work"); err != nil {
 			return false, err
 		}
 	}
