@@ -135,6 +135,7 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 
 	// DCO not valid, we don't start the build
 	if !valid {
+		log.Errorf("Invalid DCO for %s #%d. Aborting build", baseRepo, pr.Number)
 		w.WriteHeader(200)
 		return
 	}
