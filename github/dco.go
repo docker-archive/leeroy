@@ -9,7 +9,7 @@ import (
 
 func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 	// we only want the prs that are opened
-	if !prHook.IsOpened() {
+	if !prHook.IsOpened() && !prHook.IsSynchronize() {
 		return false, nil
 	}
 
