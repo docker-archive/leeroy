@@ -37,8 +37,9 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 		labels = []string{"status/0-needs-triage"}
 	}
 
-	//add labels if there are any
-	if len(labels) > 0 {
+	// add labels if there are any
+	// only add labels to new PRs not sync
+	if len(labels) > 0 && prHook.IsOpened() {
 		log.Debugf("Adding labels %#v to pr %d", labels, prHook.Number)
 
 		if err := g.addLabel(repo, prHook.Number, labels...); err != nil {
