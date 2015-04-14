@@ -8,7 +8,7 @@ import (
 )
 
 func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
-	// we only want the prs that are opened
+	// we only want the prs that are opened/synchronized
 	if !prHook.IsOpened() && !prHook.IsSynchronize() {
 		return false, nil
 	}
@@ -56,7 +56,7 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 			return false, err
 		}
 
-		if err := g.removeDCOUnsignedComment(repo, pr, content); err != nil {
+		if err := g.removeComment(repo, pr, "sign your commits", content); err != nil {
 			return false, err
 		}
 

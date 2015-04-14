@@ -35,8 +35,8 @@ This will update the existing PR, so you do not need to open a new one.
 	return g.addUniqueComment(repo, strconv.Itoa(pr.Number), comment, "sign your commits", content)
 }
 
-func (g GitHub) removeDCOUnsignedComment(repo octokat.Repo, pr *octokat.PullRequest, content *pullRequestContent) error {
-	if c := content.FindComment("sign your commits", g.User); c != nil {
+func (g GitHub) removeComment(repo octokat.Repo, pr *octokat.PullRequest, commentType string, content *pullRequestContent) error {
+	if c := content.FindComment(commentType, g.User); c != nil {
 		return g.Client().RemoveComment(repo, c.Id)
 	}
 

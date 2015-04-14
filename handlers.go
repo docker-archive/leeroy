@@ -143,6 +143,21 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	mergeable, err := g.IsMergeable(prHook)
+
+	if err != nil {
+		log.Errorf("Error checking if PR is mergeable: %v", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	// PR is not mergeable, so don't start the build
+	if !mergeable {
+		log.Errorf("Unmergeable PR for %s #%d. Aborting build", baseRepo, pr.Number)
+		w.WriteHeader(200)
+		return
+	}
+
 	// get the builds
 	builds, err := config.getBuilds(baseRepo, false)
 	if err != nil {
