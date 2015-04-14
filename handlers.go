@@ -128,19 +128,22 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 		AuthToken: config.GHToken,
 		User:      config.GHUser,
 	}
-	valid, err := g.DcoVerified(prHook)
 
-	if err != nil {
-		log.Errorf("Error validating DCO: %v", err)
-		w.WriteHeader(500)
-		return
-	}
+	if config.DcoRequired {
+		valid, err := g.DcoVerified(prHook)
 
-	// DCO not valid, we don't start the build
-	if !valid {
-		log.Errorf("Invalid DCO for %s #%d. Aborting build", baseRepo, pr.Number)
-		w.WriteHeader(200)
-		return
+		if err != nil {
+			log.Errorf("Error validating DCO: %v", err)
+			w.WriteHeader(500)
+			return
+		}
+
+		// DCO not valid, we don't start the build
+		if !valid {
+			log.Errorf("Invalid DCO for %s #%d. Aborting build", baseRepo, pr.Number)
+			w.WriteHeader(200)
+			return
+		}
 	}
 
 	mergeable, err := g.IsMergeable(prHook)
