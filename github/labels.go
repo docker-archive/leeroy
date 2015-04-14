@@ -1,6 +1,10 @@
 package github
 
-import "github.com/crosbymichael/octokat"
+import (
+	"strings"
+
+	"github.com/crosbymichael/octokat"
+)
 
 func (g GitHub) toggleLabels(repo octokat.Repo, issueNum int, labelToRemove, labelToAdd string) error {
 	if err := g.removeLabel(repo, issueNum, labelToRemove); err != nil {
@@ -17,7 +21,11 @@ func (g GitHub) addLabel(repo octokat.Repo, issueNum int, labels ...string) erro
 		Number: issueNum,
 	}
 
-	return g.Client().ApplyLabel(repo, &issue, labels)
+	err := g.Client().ApplyLabel(repo, &issue, labels)
+	if err == nil || strings.Contains(err.Error(), "Label does not exist") {
+		return nil
+	}
+	return err
 }
 
 func (g GitHub) removeLabel(repo octokat.Repo, issueNum int, labels ...string) error {
@@ -26,7 +34,9 @@ func (g GitHub) removeLabel(repo octokat.Repo, issueNum int, labels ...string) e
 	}
 
 	for _, label := range labels {
-		return g.Client().RemoveLabel(repo, &issue, label)
+		if err := g.Client().RemoveLabel(repo, &issue, label); err != nil && !strings.Contains(err.Error(), "Label does not exist") {
+			return err
+		}
 	}
 
 	return nil
