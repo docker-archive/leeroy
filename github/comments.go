@@ -32,7 +32,7 @@ The easiest way to do this is to amend the last commit:
 This will update the existing PR, so you do not need to open a new one.
 `
 
-	return g.addUniqueComment(repo, strconv.Itoa(pr.ID), comment, "sign your commits", content)
+	return g.addUniqueComment(repo, strconv.Itoa(pr.Number), comment, "sign your commits", content)
 }
 
 func (g GitHub) removeDCOUnsignedComment(repo octokat.Repo, pr *octokat.PullRequest, content *pullRequestContent) error {

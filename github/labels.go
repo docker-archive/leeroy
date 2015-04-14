@@ -21,11 +21,7 @@ func (g GitHub) addLabel(repo octokat.Repo, issueNum int, labels ...string) erro
 		Number: issueNum,
 	}
 
-	err := g.Client().ApplyLabel(repo, &issue, labels)
-	if err == nil || strings.Contains(err.Error(), "Label does not exist") {
-		return nil
-	}
-	return err
+	return g.Client().ApplyLabel(repo, &issue, labels)
 }
 
 func (g GitHub) removeLabel(repo octokat.Repo, issueNum int, labels ...string) error {
