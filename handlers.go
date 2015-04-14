@@ -124,7 +124,10 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	g := github.GitHub{config.GHToken}
+	g := github.GitHub{
+		AuthToken: config.GHToken,
+		User:      config.GHUser,
+	}
 	valid, err := g.DcoVerified(prHook)
 
 	if err != nil {

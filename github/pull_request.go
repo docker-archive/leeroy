@@ -48,10 +48,10 @@ func (p *pullRequestContent) CommitsSigned() bool {
 	return true
 }
 
-func (p *pullRequestContent) AlreadyCommented(commentType string) bool {
+func (p *pullRequestContent) AlreadyCommented(commentType, user string) bool {
 	for _, c := range p.comments {
 		// if we already made the comment return nil
-		if strings.ToLower(c.User.Login) == "gordontheturtle" && strings.Contains(c.Body, commentType) {
+		if strings.ToLower(c.User.Login) == user && strings.Contains(c.Body, commentType) {
 			log.Debugf("Already made comment about %q on PR %s", commentType, p.id)
 			return true
 		}
@@ -59,9 +59,9 @@ func (p *pullRequestContent) AlreadyCommented(commentType string) bool {
 	return false
 }
 
-func (p *pullRequestContent) FindComment(commentType string) *octokat.Comment {
+func (p *pullRequestContent) FindComment(commentType, user string) *octokat.Comment {
 	for _, c := range p.comments {
-		if strings.ToLower(c.User.Login) == "gordontheturtle" && strings.Contains(c.Body, commentType) {
+		if strings.ToLower(c.User.Login) == user && strings.Contains(c.Body, commentType) {
 			return &c
 		}
 	}

@@ -98,11 +98,11 @@ func TestAlreadyCommented(t *testing.T) {
 		}
 
 		pr := &pullRequestContent{comments: comments}
-		if done := pr.AlreadyCommented("sign your commits"); done != c.exp {
+		if done := pr.AlreadyCommented("sign your commits", "gordontheturtle"); done != c.exp {
 			t.Fatalf("Expected commented %v, but was %v for user %s and body %s\n", c.exp, done, c.login, c.body)
 		}
 
-		comment := pr.FindComment("sign your commits")
+		comment := pr.FindComment("sign your commits", "gordontheturtle")
 		found := comment != nil
 
 		if found != c.exp {

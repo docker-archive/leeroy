@@ -36,7 +36,7 @@ This will update the existing PR, so you do not need to open a new one.
 }
 
 func (g GitHub) removeDCOUnsignedComment(repo octokat.Repo, pr *octokat.PullRequest, content *pullRequestContent) error {
-	if c := content.FindComment("sign your commits"); c != nil {
+	if c := content.FindComment("sign your commits", g.User); c != nil {
 		return g.Client().RemoveComment(repo, c.Id)
 	}
 
@@ -45,7 +45,7 @@ func (g GitHub) removeDCOUnsignedComment(repo octokat.Repo, pr *octokat.PullRequ
 
 func (g GitHub) addUniqueComment(repo octokat.Repo, prNum, comment, commentType string, content *pullRequestContent) error {
 	// check if we already made the comment
-	if content.AlreadyCommented(commentType) {
+	if content.AlreadyCommented(commentType, g.User) {
 		return nil
 	}
 

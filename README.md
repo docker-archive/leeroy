@@ -40,6 +40,7 @@ Below is a sample leeroy config file:
     "build_commits": "last", // (default)
     
     "github_token": "YOUR_GITHUB_TOKEN",
+    "github_user":  "GITHUB_USER_FOR_ABOVE_TOKEN",
     
     // A list of dicts containing configuration for each GitHub repository &
     // Jenkins job pair you want to join together.
