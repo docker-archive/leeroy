@@ -17,6 +17,11 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 	pr := prHook.PullRequest
 	repo := getRepo(prHook.Repo)
 
+	// check if this is a bump branch, then we don't want to check sig
+	if pr.Base.Ref == "release" {
+		return true, nil
+	}
+
 	content, err := g.getPullRequestContent(repo, prHook.Number)
 	if err != nil {
 		return false, err
