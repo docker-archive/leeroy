@@ -158,6 +158,11 @@ func (c Config) getShas(owner, name, context string, number int) (shas []string,
 }
 
 func (c Config) scheduleJenkinsBuild(baseRepo string, number int, build Build) error {
+	// make sure we even want to build
+	if build.Job == "" {
+		return nil
+	}
+
 	// parse git repo for username
 	// and repo name
 	r := strings.SplitN(baseRepo, "/", 2)
