@@ -57,7 +57,7 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 	var verified bool
 
 	if content.CommitsSigned() {
-		if err := g.toggleLabels(repo, prHook.Number, "dco/no", "dco/yes"); err != nil {
+		if err := g.removeLabel(repo, prHook.Number, "dco/no"); err != nil {
 			return false, err
 		}
 
@@ -71,7 +71,7 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 
 		verified = true
 	} else {
-		if err := g.toggleLabels(repo, prHook.Number, "dco/yes", "dco/no"); err != nil {
+		if err := g.addLabel(repo, prHook.Number, "dco/no"); err != nil {
 			return false, err
 		}
 
