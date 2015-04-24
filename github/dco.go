@@ -22,7 +22,7 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 		return true, nil
 	}
 
-	content, err := g.getPullRequestContent(repo, prHook.Number)
+	content, err := g.getContent(repo, prHook.Number, true)
 	if err != nil {
 		return false, err
 	}
@@ -40,6 +40,9 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 		labels = []string{"status/3-needs-docs-review"}
 	default:
 		labels = []string{"status/0-needs-triage"}
+	}
+	if strings.Contains(strings.ToLower(pr.Title), "windows") || strings.Contains(strings.ToLower(pr.Body), "windows") {
+		labels = append(labels, "os/windows")
 	}
 
 	// add labels if there are any

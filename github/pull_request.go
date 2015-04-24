@@ -68,21 +68,23 @@ func (p *pullRequestContent) FindComment(commentType, user string) *octokat.Comm
 	return nil
 }
 
-func (g *GitHub) getPullRequestContent(repo octokat.Repo, prId int) (*pullRequestContent, error) {
+func (g *GitHub) getContent(repo octokat.Repo, id int, isPR bool) (*pullRequestContent, error) {
 	var (
 		files    []*octokat.PullRequestFile
 		commits  []octokat.Commit
 		comments []octokat.Comment
 		err      error
 	)
-	n := strconv.Itoa(prId)
+	n := strconv.Itoa(id)
 
-	if commits, err = g.Client().Commits(repo, n, &octokat.Options{}); err != nil {
-		return nil, err
-	}
+	if isPR {
+		if commits, err = g.Client().Commits(repo, n, &octokat.Options{}); err != nil {
+			return nil, err
+		}
 
-	if files, err = g.Client().PullRequestFiles(repo, n, &octokat.Options{}); err != nil {
-		return nil, err
+		if files, err = g.Client().PullRequestFiles(repo, n, &octokat.Options{}); err != nil {
+			return nil, err
+		}
 	}
 
 	if comments, err = g.Client().Comments(repo, n, &octokat.Options{}); err != nil {
@@ -90,7 +92,7 @@ func (g *GitHub) getPullRequestContent(repo octokat.Repo, prId int) (*pullReques
 	}
 
 	return &pullRequestContent{
-		id:       prId,
+		id:       id,
 		files:    files,
 		commits:  commits,
 		comments: comments,

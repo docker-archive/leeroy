@@ -36,6 +36,54 @@ This will update the existing PR, so **DO NOT** open a new one.
 	return g.addUniqueComment(repo, strconv.Itoa(pr.Number), comment, "sign your commits", content)
 }
 
+func (g GitHub) addNeedMoreInfoComment(repo octokat.Repo, issueNum int, content *pullRequestContent) error {
+	comment := `Hi!
+If you are reporting a new issue (that does not have any duplicates already open) we would like to take this time to remind you of the information we need to debug the problem you are seeing. This is an automated response so if this ticket is _not_ about a bug, do not fret.
+Please see:
+https://github.com/docker/docker/blob/master/CONTRIBUTING.md#reporting-other-issues
+~~~console
+Description of problem:
+
+
+` + "`docker version`" + `:
+
+
+` + "`docker info`" + `:
+
+
+` + "`uname -a`" + `:
+
+
+Environment details (AWS, VirtualBox, physical, etc.):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+
+Actual Results:
+
+
+Expected Results:
+
+
+Additional info:
+
+
+
+~~~
+
+#ENEEDMOREINFO
+`
+
+	return g.addUniqueComment(repo, strconv.Itoa(issueNum), comment, "#ENEEDMOREINFO", content)
+}
+
 func (g GitHub) removeComment(repo octokat.Repo, pr *octokat.PullRequest, commentType string, content *pullRequestContent) error {
 	if c := content.FindComment(commentType, g.User); c != nil {
 		return g.Client().RemoveComment(repo, c.Id)

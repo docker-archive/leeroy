@@ -90,6 +90,8 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 		log.Error("Got GitHub notification without a type")
 	case "ping":
 		w.WriteHeader(200)
+	case "issues", "issue_comment":
+		handleIssue(w, r)
 	case "pull_request":
 		handlePullRequest(w, r)
 	default:
@@ -97,18 +99,89 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handlePullRequest(w http.ResponseWriter, r *http.Request) {
-	log.Debugf("Got a pull request hook")
-	// parse the pull request
+func handleIssue(w http.ResponseWriter, r *http.Request) {
+	log.Debugf("Got an issue hook")
+
+	// parse the issue
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Errorf("Error reading github handler body: %v", err)
+		log.Errorf("Error reading github issue handler body: %v", err)
 		w.WriteHeader(500)
 		return
 	}
+
+	issueHook, err := octokat.ParseIssueHook(body)
+	if err != nil {
+		log.Errorf("Error parsing issue hook: %v", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	// get the build
+	baseRepo := fmt.Sprintf("%s/%s", issueHook.Repo.Owner.Login, issueHook.Repo.Name)
+	build, err := config.getBuildByContextAndRepo("janky", baseRepo)
+	if err != nil {
+		log.Warnf("could not find build for repo %s for issue handler, skipping: %v", baseRepo, err)
+		return
+	}
+
+	// if we do not handle issues for this build just return
+	if !build.HandleIssues {
+		log.Warnf("Not configured to handle issues for %s", baseRepo)
+		return
+	}
+
+	g := github.GitHub{
+		AuthToken: config.GHToken,
+		User:      config.GHUser,
+	}
+
+	// if it is not a comment or an opened issue
+	// return becuase we dont care
+
+	if !issueHook.IsComment() && !issueHook.IsOpened() {
+		log.Debugf("Ignoring PR hook action %q", issueHook.Action)
+		return
+	}
+
+	// if the issue has just been opened
+	// parse if ENEEDMOREINFO
+	if issueHook.IsOpened() {
+		if err := g.IssueInfoCheck(issueHook); err != nil {
+			log.Errorf("Error checking if issue opened needs more info: %v", err)
+			w.WriteHeader(500)
+			return
+		}
+
+		w.WriteHeader(200)
+		return
+	}
+
+	// handle if it is an issue comment
+	// apply approproate labels
+	if err := g.LabelIssueComment(issueHook); err != nil {
+		log.Errorf("Error applying labels to issue comment: %v", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	return
+}
+
+func handlePullRequest(w http.ResponseWriter, r *http.Request) {
+	log.Debugf("Got a pull request hook")
+
+	// parse the pull request
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Errorf("Error reading github pull request handler body: %v", err)
+		w.WriteHeader(500)
+		return
+	}
+
 	prHook, err := octokat.ParsePullRequestHook(body)
 	if err != nil {
-		log.Errorf("Error parsing hook: %v", err)
+		log.Errorf("Error parsing pull request hook: %v", err)
 		w.WriteHeader(500)
 		return
 	}
@@ -173,6 +246,8 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(500)
 		}
 	}
+
+	return
 }
 
 type requestBuild struct {

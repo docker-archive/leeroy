@@ -39,10 +39,11 @@ type Config struct {
 }
 
 type Build struct {
-	Repo    string `json:"github_repo"`
-	Job     string `json:"jenkins_job_name"`
-	Context string `json:"context"`
-	Custom  bool   `json:"custom"`
+	Repo         string `json:"github_repo"`
+	Job          string `json:"jenkins_job_name"`
+	Context      string `json:"context"`
+	Custom       bool   `json:"custom"`
+	HandleIssues bool   `json:"handle_issues"`
 }
 
 func init() {

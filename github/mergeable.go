@@ -21,7 +21,7 @@ func (g GitHub) IsMergeable(prHook *octokat.PullRequestHook) (mergeable bool, er
 	pr := prHook.PullRequest
 	repo := getRepo(prHook.Repo)
 
-	content, err := g.getPullRequestContent(repo, prHook.Number)
+	content, err := g.getContent(repo, prHook.Number, true)
 	if err != nil {
 		return mergeable, err
 	}
