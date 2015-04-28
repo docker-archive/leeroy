@@ -68,6 +68,21 @@ func (p *pullRequestContent) FindComment(commentType, user string) *octokat.Comm
 	return nil
 }
 
+func (p *pullRequestContent) OnlyWindows() bool {
+	var windows bool
+	var linux bool
+
+	for _, f := range p.files {
+		if strings.HasPrefix(f.FileName, "_windows.go") {
+			windows = true
+		} else if strings.HasPrefix(f.FileName, "_linux.go") {
+			linux = true
+		}
+	}
+
+	return windows && !linux
+}
+
 func (g *GitHub) getContent(repo octokat.Repo, id int, isPR bool) (*pullRequestContent, error) {
 	var (
 		files    []*octokat.PullRequestFile

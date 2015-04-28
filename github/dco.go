@@ -41,7 +41,9 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 	default:
 		labels = []string{"status/0-needs-triage"}
 	}
-	if strings.Contains(strings.ToLower(pr.Title), "windows") || strings.Contains(strings.ToLower(pr.Body), "windows") {
+	if strings.Contains(strings.ToLower(pr.Title), "windows") ||
+		strings.Contains(strings.ToLower(pr.Body), "windows") ||
+		content.OnlyWindows() {
 		labels = append(labels, "os/windows")
 	}
 
