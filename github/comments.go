@@ -103,6 +103,6 @@ func (g GitHub) addUniqueComment(repo octokat.Repo, prNum, comment, commentType 
 		return err
 	}
 
-	log.Infof("Would have added comment about %q PR %s", commentType, prNum)
+	log.Infof("Added comment about %q PR/issue %s", commentType, prNum)
 	return nil
 }

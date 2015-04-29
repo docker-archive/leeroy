@@ -119,6 +119,7 @@ func handleIssue(w http.ResponseWriter, r *http.Request) {
 
 	// get the build
 	baseRepo := fmt.Sprintf("%s/%s", issueHook.Repo.Owner.Login, issueHook.Repo.Name)
+	log.Debugf("Issue is for repo: %s", baseRepo)
 	build, err := config.getBuildByContextAndRepo("janky", baseRepo)
 	if err != nil {
 		log.Warnf("could not find build for repo %s for issue handler, skipping: %v", baseRepo, err)
@@ -136,17 +137,19 @@ func handleIssue(w http.ResponseWriter, r *http.Request) {
 		User:      config.GHUser,
 	}
 
+	log.Infof("Received GitHub issue notification for %s %d (%s): %s", baseRepo, issueHook.Issue.Number, issueHook.Issue.URL, issueHook.Action)
+
 	// if it is not a comment or an opened issue
 	// return becuase we dont care
-
 	if !issueHook.IsComment() && !issueHook.IsOpened() {
-		log.Debugf("Ignoring PR hook action %q", issueHook.Action)
+		log.Debugf("Ignoring issue hook action %q", issueHook.Action)
 		return
 	}
 
 	// if the issue has just been opened
 	// parse if ENEEDMOREINFO
 	if issueHook.IsOpened() {
+		log.Debug("Issue is opened, checking if we have correct info")
 		if err := g.IssueInfoCheck(issueHook); err != nil {
 			log.Errorf("Error checking if issue opened needs more info: %v", err)
 			w.WriteHeader(500)
