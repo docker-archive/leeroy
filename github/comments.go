@@ -38,7 +38,14 @@ This will update the existing PR, so **DO NOT** open a new one.
 
 func (g GitHub) addNeedMoreInfoComment(repo octokat.Repo, issueNum int, content *pullRequestContent) error {
 	comment := `Hi!
-If you are reporting a new issue (that does not have any duplicates already open) we would like to take this time to remind you of the information we need to debug the problem you are seeing. This is an automated response so if this ticket is _not_ about a bug, do not fret.
+If you are reporting a new issue, PLEASE make sure that does not have any duplicates already open. 
+
+We would like to take this time to remind you of the information we need to debug the problem you are seeing. This is an automated response so if this ticket is _not_ about a bug, do not fret.
+
+If you fail to provide this information within 7 days, we will close this because we cannot debug your issue. We can reopen whenever the information is provided.
+
+Thank you.
+
 Please see:
 https://github.com/docker/docker/blob/master/CONTRIBUTING.md#reporting-other-issues
 ~~~console
