@@ -9,7 +9,7 @@ import (
 )
 
 func (g GitHub) addDCOUnsignedComment(repo octokat.Repo, pr *octokat.PullRequest, content *pullRequestContent) error {
-	comment := `Can you please sign your commits following these rules:
+	comment := `Please sign your commits following these rules:
 https://github.com/docker/docker/blob/master/CONTRIBUTING.md#sign-your-work
 The easiest way to do this is to amend the last commit:
 ~~~console
@@ -30,7 +30,7 @@ The easiest way to do this is to amend the last commit:
 	comment += "$ git push -f\n"
 	comment += `~~~
 
-This will update the existing PR, so **DO NOT** open a new one.
+Ammending updates the existing PR. You **DO NOT** need to open a new one.
 `
 
 	return g.addUniqueComment(repo, strconv.Itoa(pr.Number), comment, "sign your commits", content)
@@ -38,52 +38,50 @@ This will update the existing PR, so **DO NOT** open a new one.
 
 func (g GitHub) addNeedMoreInfoComment(repo octokat.Repo, issueNum int, content *pullRequestContent) error {
 	comment := `Hi!
-If you are reporting a new issue, PLEASE make sure that does not have any duplicates already open. 
+	
+Please read this important information about creating issues.
 
-We would like to take this time to remind you of the information we need to debug the problem you are seeing. This is an automated response so if this ticket is _not_ about a bug, do not fret.
+If you are reporting a new issue, make sure that we do not have any duplicates already open. You can ensure this by searching the issue list for this repository. If there is a duplicate, please close your issue and add a comment to the existing issue instead.
 
-If you fail to provide this information within 7 days, we will close this because we cannot debug your issue. We can reopen whenever the information is provided.
+If you suspect your issue is a bug, please edit your issue description to include the BUG REPORT INFORMATION shown below. If you fail to provide this information within 7 days, we cannot debug your issue and will close it. We will, however, reopen it if you later provide the information.
+
+This is an automated, informational response. 
 
 Thank you.
 
-Please see:
-https://github.com/docker/docker/blob/master/CONTRIBUTING.md#reporting-other-issues
-~~~console
-Description of problem:
+For more information about reporting issues, see https://github.com/docker/docker/blob/master/CONTRIBUTING.md#reporting-other-issues 
 
+-----------------------------
+BUG REPORT INFORMATION
+-----------------------------
+Use the commands below to provide key information from your environment:
 
 ` + "`docker version`" + `:
-
-
 ` + "`docker info`" + `:
-
-
 ` + "`uname -a`" + `:
 
-
-Environment details (AWS, VirtualBox, physical, etc.):
-
-
-How reproducible:
+Provide additional environment details (AWS, VirtualBox, physical, etc.):
 
 
-Steps to Reproduce:
+
+List the steps to reproduce the issue:
 1.
 2.
 3.
 
 
-Actual Results:
+Describe the results you received:
 
 
-Expected Results:
+Describe the results you expected:
 
 
-Additional info:
+Provide additional info you think is important:
 
 
+----------END REPORT ---------
 
-~~~
+
 
 #ENEEDMOREINFO
 `
