@@ -41,10 +41,12 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 	default:
 		labels = []string{"status/0-needs-triage"}
 	}
-	if strings.Contains(strings.ToLower(pr.Title), "windows") ||
-		strings.Contains(strings.ToLower(pr.Body), "windows") ||
-		content.OnlyWindows() {
+
+	if labelOs(pr, "windows", content.OnlyWindows) {
 		labels = append(labels, "os/windows")
+	}
+	if labelOs(pr, "freebsd", content.OnlyFreebsd) {
+		labels = append(labels, "os/freebsd")
 	}
 
 	// add labels if there are any
@@ -97,4 +99,10 @@ func getRepo(repo *octokat.Repository) octokat.Repo {
 		Name:     repo.Name,
 		UserName: repo.Owner.Login,
 	}
+}
+
+func labelOs(pr *octokat.PullRequest, os string, fileChecker func() bool) bool {
+	return strings.Contains(strings.ToLower(pr.Title), os) ||
+		strings.Contains(strings.ToLower(pr.Body), os) ||
+		fileChecker()
 }

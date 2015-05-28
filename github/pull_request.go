@@ -68,6 +68,21 @@ func (p *pullRequestContent) FindComment(commentType, user string) *octokat.Comm
 	return nil
 }
 
+func (p *pullRequestContent) OnlyFreebsd() bool {
+	var freebsd bool
+	var linux bool
+
+	for _, f := range p.files {
+		if strings.HasPrefix(f.FileName, "_freebsd.go") {
+			freebsd = true
+		} else if strings.HasPrefix(f.FileName, "_linux.go") {
+			linux = true
+		}
+	}
+
+	return freebsd && !linux
+}
+
 func (p *pullRequestContent) OnlyWindows() bool {
 	var windows bool
 	var linux bool
