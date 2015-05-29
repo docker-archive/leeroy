@@ -204,7 +204,7 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 		AuthToken: config.GHToken,
 		User:      config.GHUser,
 	}
-	valid, err := g.DcoVerified(prHook)
+	valid, content, err := g.DcoVerified(prHook)
 
 	if err != nil {
 		log.Errorf("Error validating DCO: %v", err)
@@ -230,6 +230,11 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 	// PR is not mergeable, so don't start the build
 	if !mergeable {
 		log.Errorf("Unmergeable PR for %s #%d. Aborting build", baseRepo, pr.Number)
+		w.WriteHeader(200)
+		return
+	}
+
+	if content.IsDocsOnly() {
 		w.WriteHeader(200)
 		return
 	}
