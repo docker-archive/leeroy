@@ -42,7 +42,6 @@ func (g GitHub) LabelIssueComment(issueHook *octokat.IssueHook) error {
 		"#dibs":    "status/claimed",
 		"#claimed": "status/claimed",
 		"#mine":    "status/claimed",
-		"windows":  "os/windows",
 	}
 
 	repo := getRepo(issueHook.Repo)
