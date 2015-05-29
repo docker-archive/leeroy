@@ -234,7 +234,7 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if content.IsDocsOnly() {
+	if content != nil && content.IsDocsOnly() {
 		w.WriteHeader(200)
 		return
 	}
