@@ -73,9 +73,9 @@ func (p *pullRequestContent) OnlyFreebsd() bool {
 	var linux bool
 
 	for _, f := range p.files {
-		if strings.HasSuffix(f.FileName, "_freebsd.go") {
+		if strings.HasPrefix(f.FileName, "_freebsd.go") {
 			freebsd = true
-		} else if strings.HasSuffix(f.FileName, "_linux.go") {
+		} else if strings.HasPrefix(f.FileName, "_linux.go") {
 			linux = true
 		}
 	}
@@ -88,9 +88,9 @@ func (p *pullRequestContent) OnlyWindows() bool {
 	var linux bool
 
 	for _, f := range p.files {
-		if strings.HasSuffix(f.FileName, "_windows.go") {
+		if strings.HasPrefix(f.FileName, "_windows.go") {
 			windows = true
-		} else if strings.HasSuffix(f.FileName, "_linux.go") {
+		} else if strings.HasPrefix(f.FileName, "_linux.go") {
 			linux = true
 		}
 	}

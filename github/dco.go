@@ -7,10 +7,10 @@ import (
 	"github.com/crosbymichael/octokat"
 )
 
-func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, *pullRequestContent, error) {
+func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 	// we only want the prs that are opened/synchronized
 	if !prHook.IsOpened() && !prHook.IsSynchronize() {
-		return false, nil, nil
+		return false, nil
 	}
 
 	// get the PR
@@ -19,12 +19,12 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, *pullRequest
 
 	// check if this is a bump branch, then we don't want to check sig
 	if pr.Base.Ref == "release" {
-		return true, nil, nil
+		return true, nil
 	}
 
 	content, err := g.getContent(repo, prHook.Number, true)
 	if err != nil {
-		return false, nil, err
+		return false, err
 	}
 
 	// we only want apply labels
@@ -55,7 +55,7 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, *pullRequest
 		log.Debugf("Adding labels %#v to pr %d", labels, prHook.Number)
 
 		if err := g.addLabel(repo, prHook.Number, labels...); err != nil {
-			return false, content, err
+			return false, err
 		}
 
 		log.Infof("Added labels %#v to pr %d", labels, prHook.Number)
@@ -65,33 +65,33 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, *pullRequest
 
 	if content.CommitsSigned() {
 		if err := g.removeLabel(repo, prHook.Number, "dco/no"); err != nil {
-			return false, content, err
+			return false, err
 		}
 
 		if err := g.removeComment(repo, pr, "sign your commits", content); err != nil {
-			return false, content, err
+			return false, err
 		}
 
 		if err := g.successStatus(repo, pr.Head.Sha, "docker/dco-signed", "All commits signed"); err != nil {
-			return false, content, err
+			return false, err
 		}
 
 		verified = true
 	} else {
 		if err := g.addLabel(repo, prHook.Number, "dco/no"); err != nil {
-			return false, content, err
+			return false, err
 		}
 
 		if err := g.addDCOUnsignedComment(repo, pr, content); err != nil {
-			return false, content, err
+			return false, err
 		}
 
 		if err := g.failureStatus(repo, pr.Head.Sha, "docker/dco-signed", "Some commits without signature", "https://github.com/docker/docker/blob/master/CONTRIBUTING.md#sign-your-work"); err != nil {
-			return false, content, err
+			return false, err
 		}
 	}
 
-	return verified, content, nil
+	return verified, nil
 }
 
 func getRepo(repo *octokat.Repository) octokat.Repo {
