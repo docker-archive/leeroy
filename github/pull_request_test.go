@@ -34,27 +34,34 @@ func TestCommitsAreSigned(t *testing.T) {
 }
 
 func TestFilesAreDocs(t *testing.T) {
-	cases := map[string]bool{
-		"":                 false,
-		"file.txt":         false,
-		"file.md":          false,
-		"docs/file.txt":    false,
-		"docs/file.md":     true,
-		"docs/hub/file.md": true,
+	cases := []struct {
+		files []string
+		valid bool
+	}{
+		{[]string{""}, false},
+		{[]string{"file.md"}, true},
+		{[]string{"docs/file.txt"}, true},
+		{[]string{"docs/file.md"}, true},
+		{[]string{"docs/hub/file.md"}, true},
+		{[]string{"man/file.txt"}, true},
+		{[]string{"docs/hub/file.md", "man/file.txt"}, true},
+		{[]string{"experimental/file.txt"}, true},
+		{[]string{"daemon/daemon.go", "experimental/file.txt"}, false},
 	}
 
-	for filePath, valid := range cases {
-		files := []*octokat.PullRequestFile{
-			&octokat.PullRequestFile{
-				FileName: filePath,
-			},
+	for _, c := range cases {
+		var files []*octokat.PullRequestFile
+		for _, f := range c.files {
+			files = append(files, &octokat.PullRequestFile{
+				FileName: f,
+			})
 		}
 
 		pr := &pullRequestContent{files: files}
 		s := pr.IsDocsOnly()
 
-		if s != valid {
-			t.Fatalf("expected %v, was %v, for: %s\n", valid, s, filePath)
+		if s != c.valid {
+			t.Fatalf("expected %v, was %v, for: %s\n", c.valid, s, c.files)
 		}
 	}
 }
