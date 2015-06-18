@@ -26,7 +26,8 @@ func (p *pullRequestContent) IsDocsOnly() bool {
 	}
 
 	for _, f := range p.files {
-		if !strings.HasSuffix(f.FileName, ".md") || !strings.HasPrefix(f.FileName, "docs") {
+		if !strings.HasSuffix(f.FileName, ".md") && !strings.HasPrefix(f.FileName, "docs") &&
+			!strings.HasPrefix(f.FileName, "man") && !strings.HasPrefix(f.FileName, "experimental") {
 			return false
 		}
 	}
