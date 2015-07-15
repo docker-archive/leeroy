@@ -35,18 +35,15 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 	isProposal := strings.Contains(strings.ToLower(pr.Title), "proposal")
 	switch {
 	case isProposal:
-		labels = []string{"status/1-needs-design-review"}
+		labels = []string{"status/1-design-review"}
 	case content.IsDocsOnly():
-		labels = []string{"status/3-needs-docs-review"}
+		labels = []string{"status/3-docs-review"}
 	default:
-		labels = []string{"status/0-needs-triage"}
+		labels = []string{"status/0-triage"}
 	}
 
 	if labelOs(pr, "windows", content.OnlyWindows) {
-		labels = append(labels, "os/windows")
-	}
-	if labelOs(pr, "freebsd", content.OnlyFreebsd) {
-		labels = append(labels, "os/freebsd")
+		labels = append(labels, "group/windows")
 	}
 
 	// add labels if there are any
