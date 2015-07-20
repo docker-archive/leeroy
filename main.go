@@ -36,6 +36,7 @@ type Config struct {
 	Builds       []Build        `json:"builds"`
 	User         string         `json:"user"`
 	Pass         string         `json:"pass"`
+	DcoRequired  bool           `json:"dco"`
 }
 
 type Build struct {
