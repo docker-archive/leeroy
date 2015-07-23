@@ -7,6 +7,12 @@ import (
 	"github.com/crosbymichael/octokat"
 )
 
+const (
+	groupWindows      = "group/windows"
+	groupFreeBSD      = "group/freebsd"
+	groupDistribution = "group/distribution"
+)
+
 func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 	// we only want the prs that are opened/synchronized
 	if !prHook.IsOpened() && !prHook.IsSynchronize() {
@@ -43,7 +49,15 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 	}
 
 	if labelOs(pr, "windows", content.OnlyWindows) {
-		labels = append(labels, "group/windows")
+		labels = append(labels, groupWindows)
+	}
+
+	if labelOs(pr, "freebsd", content.OnlyFreebsd) {
+		labels = append(labels, groupFreeBSD)
+	}
+
+	if content.Distribution() {
+		labels = append(labels, groupDistribution)
 	}
 
 	// add labels if there are any

@@ -35,6 +35,20 @@ func (p *pullRequestContent) IsDocsOnly() bool {
 	return true
 }
 
+func (p *pullRequestContent) Distribution() bool {
+	if len(p.files) == 0 {
+		return false
+	}
+
+	for _, f := range p.files {
+		if anyPackage(f.FileName, "registry", "graph", "image", "trust", "builder") {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (p *pullRequestContent) CommitsSigned() bool {
 	if len(p.commits) == 0 {
 		return true
@@ -128,4 +142,13 @@ func (g *GitHub) getContent(repo octokat.Repo, id int, isPR bool) (*pullRequestC
 		commits:  commits,
 		comments: comments,
 	}, nil
+}
+
+func anyPackage(fileName string, packages ...string) bool {
+	for _, p := range packages {
+		if strings.HasPrefix(fileName, p) {
+			return true
+		}
+	}
+	return false
 }
