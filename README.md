@@ -1,6 +1,6 @@
 ## Leeroy: Jenkins integration with GitHub pull requests
 
-[![Circle CI](https://circleci.com/gh/jfrazelle/leeroy.svg?style=svg)](https://circleci.com/gh/jfrazelle/leeroy)
+[![Circle CI](https://circleci.com/gh/docker/leeroy.svg?style=svg)](https://circleci.com/gh/docker/leeroy)
 
 Leeroy is a Go application which integrates Jenkins with 
 GitHub pull requests.  
