@@ -13,6 +13,34 @@ var (
 	dcoRegex = regexp.MustCompile("(?m)(Docker-DCO-1.1-)?Signed-off-by: ([^<]+) <([^<>@]+@[^<>]+)>( \\(github: ([a-zA-Z0-9][a-zA-Z0-9-]+)\\))?")
 )
 
+type PullRequest struct {
+	Hook    *octokat.PullRequestHook
+	Repo    octokat.Repo
+	Content *pullRequestContent
+	*octokat.PullRequest
+}
+
+func (g GitHub) LoadPullRequest(hook *octokat.PullRequestHook) (*PullRequest, error) {
+	pr := hook.PullRequest
+	repo := getRepo(hook.Repo)
+
+	content, err := g.getContent(repo, hook.Number, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PullRequest{
+		Hook:        hook,
+		Repo:        repo,
+		Content:     content,
+		PullRequest: pr,
+	}, nil
+}
+
+func (pr PullRequest) ReleaseBase() bool {
+	return pr.Base.Ref == "release"
+}
+
 type pullRequestContent struct {
 	id       int
 	files    []*octokat.PullRequestFile
