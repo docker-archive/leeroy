@@ -36,8 +36,10 @@ func TestIsMergeable(t *testing.T) {
 	}
 
 	for _, pe := range prs {
-		if pe.expected != isMergeable(pe.pr) {
-			t.Fatalf("expected %v, was %v, for: %#v\n", pe.expected, isMergeable(pe.pr), pe)
+		p := &PullRequest{PullRequest: pe.pr}
+		mergeable := isMergeable(p)
+		if pe.expected != mergeable {
+			t.Fatalf("expected %v, was %v, for: %#v\n", pe.expected, mergeable, pe)
 		}
 	}
 }

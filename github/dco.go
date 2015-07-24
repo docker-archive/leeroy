@@ -13,24 +13,15 @@ const (
 	groupDistribution = "group/distribution"
 )
 
-func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
+func (g GitHub) DcoVerified(pr *PullRequest) (bool, error) {
 	// we only want the prs that are opened/synchronized
-	if !prHook.IsOpened() && !prHook.IsSynchronize() {
+	if !pr.Hook.IsOpened() && !pr.Hook.IsSynchronize() {
 		return false, nil
 	}
 
-	// get the PR
-	pr := prHook.PullRequest
-	repo := getRepo(prHook.Repo)
-
 	// check if this is a bump branch, then we don't want to check sig
-	if pr.Base.Ref == "release" {
+	if pr.ReleaseBase() {
 		return true, nil
-	}
-
-	content, err := g.getContent(repo, prHook.Number, true)
-	if err != nil {
-		return false, err
 	}
 
 	// we only want apply labels
@@ -42,62 +33,62 @@ func (g GitHub) DcoVerified(prHook *octokat.PullRequestHook) (bool, error) {
 	switch {
 	case isProposal:
 		labels = []string{"status/1-design-review"}
-	case content.IsDocsOnly():
+	case pr.Content.IsDocsOnly():
 		labels = []string{"status/3-docs-review"}
 	default:
 		labels = []string{"status/0-triage"}
 	}
 
-	if labelOs(pr, "windows", content.OnlyWindows) {
+	if labelOs(pr, "windows", pr.Content.OnlyWindows) {
 		labels = append(labels, groupWindows)
 	}
 
-	if labelOs(pr, "freebsd", content.OnlyFreebsd) {
+	if labelOs(pr, "freebsd", pr.Content.OnlyFreebsd) {
 		labels = append(labels, groupFreeBSD)
 	}
 
-	if content.Distribution() {
+	if pr.Content.Distribution() {
 		labels = append(labels, groupDistribution)
 	}
 
 	// add labels if there are any
 	// only add labels to new PRs not sync
-	if len(labels) > 0 && prHook.IsOpened() {
-		log.Debugf("Adding labels %#v to pr %d", labels, prHook.Number)
+	if len(labels) > 0 && pr.Hook.IsOpened() {
+		log.Debugf("Adding labels %#v to pr %d", labels, pr.Hook.Number)
 
-		if err := g.addLabel(repo, prHook.Number, labels...); err != nil {
+		if err := g.addLabel(pr.Repo, pr.Hook.Number, labels...); err != nil {
 			return false, err
 		}
 
-		log.Infof("Added labels %#v to pr %d", labels, prHook.Number)
+		log.Infof("Added labels %#v to pr %d", labels, pr.Hook.Number)
 	}
 
 	var verified bool
 
-	if content.CommitsSigned() {
-		if err := g.removeLabel(repo, prHook.Number, "dco/no"); err != nil {
+	if pr.Content.CommitsSigned() {
+		if err := g.removeLabel(pr.Repo, pr.Hook.Number, "dco/no"); err != nil {
 			return false, err
 		}
 
-		if err := g.removeComment(repo, pr, "sign your commits", content); err != nil {
+		if err := g.removeComment(pr.Repo, "sign your commits", pr.Content); err != nil {
 			return false, err
 		}
 
-		if err := g.successStatus(repo, pr.Head.Sha, "docker/dco-signed", "All commits signed"); err != nil {
+		if err := g.successStatus(pr.Repo, pr.Head.Sha, "docker/dco-signed", "All commits signed"); err != nil {
 			return false, err
 		}
 
 		verified = true
 	} else {
-		if err := g.addLabel(repo, prHook.Number, "dco/no"); err != nil {
+		if err := g.addLabel(pr.Repo, pr.Hook.Number, "dco/no"); err != nil {
 			return false, err
 		}
 
-		if err := g.addDCOUnsignedComment(repo, pr, content); err != nil {
+		if err := g.addDCOUnsignedComment(pr.Repo, pr, pr.Content); err != nil {
 			return false, err
 		}
 
-		if err := g.failureStatus(repo, pr.Head.Sha, "docker/dco-signed", "Some commits without signature", "https://github.com/docker/docker/blob/master/CONTRIBUTING.md#sign-your-work"); err != nil {
+		if err := g.failureStatus(pr.Repo, pr.Head.Sha, "docker/dco-signed", "Some commits without signature", "https://github.com/docker/docker/blob/master/CONTRIBUTING.md#sign-your-work"); err != nil {
 			return false, err
 		}
 	}
@@ -112,7 +103,7 @@ func getRepo(repo *octokat.Repository) octokat.Repo {
 	}
 }
 
-func labelOs(pr *octokat.PullRequest, os string, fileChecker func() bool) bool {
+func labelOs(pr *PullRequest, os string, fileChecker func() bool) bool {
 	return strings.Contains(strings.ToLower(pr.Title), os) ||
 		strings.Contains(strings.ToLower(pr.Body), os) ||
 		fileChecker()

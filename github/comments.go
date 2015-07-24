@@ -8,7 +8,7 @@ import (
 	"github.com/crosbymichael/octokat"
 )
 
-func (g GitHub) addDCOUnsignedComment(repo octokat.Repo, pr *octokat.PullRequest, content *pullRequestContent) error {
+func (g GitHub) addDCOUnsignedComment(repo octokat.Repo, pr *PullRequest, content *pullRequestContent) error {
 	comment := `Please sign your commits following these rules:
 https://github.com/docker/docker/blob/master/CONTRIBUTING.md#sign-your-work
 The easiest way to do this is to amend the last commit:
@@ -89,7 +89,7 @@ Provide additional info you think is important:
 	return g.addUniqueComment(repo, strconv.Itoa(issueNum), comment, "#ENEEDMOREINFO", content)
 }
 
-func (g GitHub) removeComment(repo octokat.Repo, pr *octokat.PullRequest, commentType string, content *pullRequestContent) error {
+func (g GitHub) removeComment(repo octokat.Repo, commentType string, content *pullRequestContent) error {
 	if c := content.FindComment(commentType, g.User); c != nil {
 		return g.Client().RemoveComment(repo, c.Id)
 	}

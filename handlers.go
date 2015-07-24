@@ -8,8 +8,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
-	"github.com/jfrazelle/leeroy/github"
-	"github.com/jfrazelle/leeroy/jenkins"
+	"github.com/docker/leeroy/github"
+	"github.com/docker/leeroy/jenkins"
 )
 
 func pingHandler(w http.ResponseWriter, r *http.Request) {
@@ -204,7 +204,15 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 		AuthToken: config.GHToken,
 		User:      config.GHUser,
 	}
-	valid, err := g.DcoVerified(prHook)
+
+	pullRequest, err := g.LoadPullRequest(prHook)
+	if err != nil {
+		log.Errorf("Error loading the pull request: %v", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	valid, err := g.DcoVerified(pullRequest)
 
 	if err != nil {
 		log.Errorf("Error validating DCO: %v", err)
@@ -219,8 +227,7 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mergeable, err := g.IsMergeable(prHook)
-
+	mergeable, err := g.IsMergeable(pullRequest)
 	if err != nil {
 		log.Errorf("Error checking if PR is mergeable: %v", err)
 		w.WriteHeader(500)
@@ -230,6 +237,12 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 	// PR is not mergeable, so don't start the build
 	if !mergeable {
 		log.Errorf("Unmergeable PR for %s #%d. Aborting build", baseRepo, pr.Number)
+		w.WriteHeader(200)
+		return
+	}
+
+	// Only docs, don't start jenkins jobs
+	if pullRequest.Content.IsDocsOnly() {
 		w.WriteHeader(200)
 		return
 	}
