@@ -299,19 +299,36 @@ func customBuildHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get the build
-	build, err := config.getBuildByContextAndRepo(b.Context, b.Repo)
-	if err != nil {
-		log.Error(err)
-		w.WriteHeader(500)
-		return
+	var (
+		builds []Build
+		err    error
+	)
+	if b.Context == "all" {
+		// get all the builds
+		builds, err = config.getBuilds(b.Repo, false)
+		if err != nil {
+			log.Error(err)
+			w.WriteHeader(500)
+			return
+		}
+
+	} else {
+		// get the build
+		build, err := config.getBuildByContextAndRepo(b.Context, b.Repo)
+		if err != nil {
+			log.Error(err)
+			w.WriteHeader(500)
+			return
+		}
+		builds = append(builds, build)
 	}
 
-	// schedule the jenkins build
-	if err := config.scheduleJenkinsBuild(b.Repo, b.Number, build); err != nil {
-		w.WriteHeader(500)
-		log.Error(err)
-		return
+	// schedule the jenkins builds
+	for _, build := range builds {
+		if err := config.scheduleJenkinsBuild(b.Repo, b.Number, build); err != nil {
+			log.Error(err)
+			w.WriteHeader(500)
+		}
 	}
 
 	w.WriteHeader(204)
