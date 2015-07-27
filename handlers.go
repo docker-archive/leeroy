@@ -303,7 +303,7 @@ func customBuildHandler(w http.ResponseWriter, r *http.Request) {
 		builds []Build
 		err    error
 	)
-	if b.Context == "all" {
+	if b.Context == "all" || b.Context == "" {
 		// get all the builds
 		builds, err = config.getBuilds(b.Repo, false)
 		if err != nil {
