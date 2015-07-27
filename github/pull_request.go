@@ -122,17 +122,21 @@ func (g *GitHub) getContent(repo octokat.Repo, id int, isPR bool) (*pullRequestC
 	)
 	n := strconv.Itoa(id)
 
+	options := &octokat.Options{
+		QueryParams: map[string]string{"per_page": "100"},
+	}
+
 	if isPR {
-		if commits, err = g.Client().Commits(repo, n, &octokat.Options{}); err != nil {
+		if commits, err = g.Client().Commits(repo, n, options); err != nil {
 			return nil, err
 		}
 
-		if files, err = g.Client().PullRequestFiles(repo, n, &octokat.Options{}); err != nil {
+		if files, err = g.Client().PullRequestFiles(repo, n, options); err != nil {
 			return nil, err
 		}
 	}
 
-	if comments, err = g.Client().Comments(repo, n, &octokat.Options{}); err != nil {
+	if comments, err = g.Client().Comments(repo, n, options); err != nil {
 		return nil, err
 	}
 
