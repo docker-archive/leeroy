@@ -72,8 +72,8 @@ rebuild_pulls(){
 
 			if [[ "$context" != docker* ]]; then
 				echo "Rebuilding pull request ${id} for context $context, build had state ${state}"
-				data='{"repo":"'${repo}'","context":"'${context}'","number":"'${id}'"}'
-				curl -ssL -X POST -d "${data}" ${LEEROY_URI}/build/custom
+				data='{"repo":"'${repo}'","context":"'${context}'","number":'${id}'}'
+				curl -ssL -X POST --user "${LEEROY_AUTH}" --data "${data}" ${LEEROY_URI}/build/custom
 			fi
 		done
 	done
