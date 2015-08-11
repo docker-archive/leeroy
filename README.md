@@ -6,10 +6,14 @@ Leeroy is a Go application which integrates Jenkins with
 GitHub pull requests.  
 Leeroy uses [GitHub hooks](http://developer.github.com/v3/repos/hooks/) 
 to listen for pull request notifications and starts jobs on your Jenkins 
-server.  Using the Jenkins [notification plugin][jnp], Leeroy updates the 
+server.  Using the Jenkins notification plugin, Leeroy updates the 
 pull request using GitHub's 
 [status API](http://developer.github.com/v3/repos/statuses/)
 with pending, success, failure, or error statuses.
+
+This is based off the python project [leeroy](https://github.com/litl/leeroy),
+but has a few custom updates to meet our needs, including custom build
+endpoint, DCO checking, issue labeling, etc.
 
 ### Configuration
 
