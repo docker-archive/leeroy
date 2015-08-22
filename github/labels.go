@@ -6,6 +6,12 @@ import (
 	"github.com/crosbymichael/octokat"
 )
 
+const (
+	triageLabel       = "status/0-triage"
+	designReviewLabel = "status/1-design-review"
+	codeReviewLabel   = "status/2-code-review"
+)
+
 type labels map[string]bool
 
 func (g GitHub) toggleLabels(repo octokat.Repo, issueNum int, labelToRemove, labelToAdd string) error {

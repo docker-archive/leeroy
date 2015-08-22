@@ -94,6 +94,8 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 		handleIssue(w, r)
 	case "pull_request":
 		handlePullRequest(w, r)
+	case "pull_request_review_comment":
+		handlePullRequestReviewComment(w, r)
 	default:
 		fmt.Errorf("Got unknown GitHub notification event type: %s", event)
 	}
@@ -157,6 +159,21 @@ func handleIssue(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.WriteHeader(200)
+		return
+	}
+
+	if issueHook.Issue.State != "open" {
+		return
+	}
+
+	if issueHook.Issue.PullRequest.HTMLURL != "" {
+		if err := g.MoveTriageForward(issueHook.Repo, issueHook.Issue.Number, issueHook.Comment); err != nil {
+			log.Error(err)
+			w.WriteHeader(500)
+			return
+		}
+
+		w.WriteHeader(204)
 		return
 	}
 
@@ -383,6 +400,34 @@ func cronBuildHandler(w http.ResponseWriter, r *http.Request) {
 		if err := config.scheduleJenkinsBuild(b.Repo, prNum, build); err != nil {
 			log.Error(err)
 		}
+	}
+
+	w.WriteHeader(204)
+	return
+}
+
+func handlePullRequestReviewComment(w http.ResponseWriter, r *http.Request) {
+	hook, err := github.ParsePullRequestReviewCommentHook(r.Body)
+	if err != nil {
+		log.Error(err)
+		w.WriteHeader(500)
+		return
+	}
+
+	if !hook.IsOpen() {
+		w.WriteHeader(200)
+		return
+	}
+
+	g := github.GitHub{
+		AuthToken: config.GHToken,
+		User:      config.GHUser,
+	}
+
+	if err := g.MoveTriageForward(hook.Repo, hook.PullRequest.Number, hook.Comment); err != nil {
+		log.Error(err)
+		w.WriteHeader(500)
+		return
 	}
 
 	w.WriteHeader(204)
