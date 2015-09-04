@@ -33,7 +33,7 @@ func (g GitHub) IssueInfoCheck(issueHook *octokat.IssueHook) error {
 	// docker info, docker version, uname -a
 	if !strings.Contains(body, "docker version") || !strings.Contains(body, "docker info") || !strings.Contains(body, "uname -a") {
 		// get content
-		repo := getRepo(issueHook.Repo)
+		repo := nameWithOwner(issueHook.Repo)
 		content, err := g.getContent(repo, issueHook.Issue.Number, false)
 		if err != nil {
 			return err
@@ -64,7 +64,7 @@ func (g GitHub) maybeClaimIssue(issueHook *octokat.IssueHook) error {
 		"#mine":    "status/claimed",
 	}
 
-	repo := getRepo(issueHook.Repo)
+	repo := nameWithOwner(issueHook.Repo)
 
 	for token, label := range labelmap {
 		// if comment matches predefined actions AND author is not bot

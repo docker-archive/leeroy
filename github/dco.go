@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/crosbymichael/octokat"
 )
 
 const (
@@ -94,13 +93,6 @@ func (g GitHub) DcoVerified(pr *PullRequest) (bool, error) {
 	}
 
 	return verified, nil
-}
-
-func getRepo(repo *octokat.Repository) octokat.Repo {
-	return octokat.Repo{
-		Name:     repo.Name,
-		UserName: repo.Owner.Login,
-	}
 }
 
 func labelOs(pr *PullRequest, os string, fileChecker func() bool) bool {

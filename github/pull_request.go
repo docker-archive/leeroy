@@ -22,7 +22,7 @@ type PullRequest struct {
 
 func (g GitHub) LoadPullRequest(hook *octokat.PullRequestHook) (*PullRequest, error) {
 	pr := hook.PullRequest
-	repo := getRepo(hook.Repo)
+	repo := nameWithOwner(hook.Repo)
 
 	content, err := g.getContent(repo, hook.Number, true)
 	if err != nil {
