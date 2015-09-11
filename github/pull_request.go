@@ -63,6 +63,20 @@ func (p *pullRequestContent) IsDocsOnly() bool {
 	return true
 }
 
+func (p *pullRequestContent) ChangesLXC() bool {
+	if len(p.files) == 0 {
+		return false
+	}
+
+	for _, f := range p.files {
+		if !strings.HasPrefix(f.FileName, "daemon/execdriver/lxc") {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (p *pullRequestContent) Distribution() bool {
 	if len(p.files) == 0 {
 		return false

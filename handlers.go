@@ -272,6 +272,16 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// If changes lxc add that build, don't start jenkins jobs
+	if pullRequest.Content.ChangesLXC() {
+		build, err := config.getBuildByContextAndRepo("lxc", baseRepo)
+		if err != nil {
+			log.Warnf("Adding lxc build to %s for %d failed: %v", baseRepo, pr.Number, err)
+		} else {
+			builds = append(builds, build)
+		}
+	}
+
 	// schedule the jenkins builds
 	for _, build := range builds {
 		if err := config.scheduleJenkinsBuild(baseRepo, pr.Number, build); err != nil {
