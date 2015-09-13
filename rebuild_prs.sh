@@ -26,7 +26,7 @@ get_last_page(){
 	header=${1%%" rel=\"last\""*}
 	header=${header#*"rel=\"next\""}
 	header=${header%%">;"*}
-	LAST_PAGE=${header#*"&page="}
+	LAST_PAGE=$(echo ${header#*"&page="} | bc 2>/dev/null)
 }
 
 rebuild_pulls(){
@@ -40,8 +40,8 @@ rebuild_pulls(){
 	local head=true
 	local header=
 	local body=
-	while read -r line; do 
-		if $head; then 
+	while read -r line; do
+		if $head; then
 			if [[ $line = $'\r' ]]; then
 				head=false
 			else
@@ -90,7 +90,7 @@ main(){
 
 	rebuild_pulls "${repo}" "${page}"
 
-	if [ "$LAST_PAGE" -ge "$page" ]; then
+	if [ ! -z "$LAST_PAGE" ] && [ "$LAST_PAGE" -ge "$page" ]; then
 		for page in  $(seq $((page + 1)) 1 ${LAST_PAGE}); do
 			echo "On page ${page} of ${LAST_PAGE}"
 			rebuild_pulls "${repo}" "${page}"
