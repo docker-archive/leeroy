@@ -84,8 +84,7 @@ main(){
 	: ${page:=1}
 
 	if [[ -z "$repo" ]]; then
-		echo "Pass a repo as the first arguement, ex. docker/docker"
-		return 1
+		repo="docker/docker"
 	fi
 
 	rebuild_pulls "${repo}" "${page}"
@@ -98,4 +97,4 @@ main(){
 	fi
 }
 
-main "docker/docker"
+main $@
