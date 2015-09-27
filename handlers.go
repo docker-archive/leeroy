@@ -260,8 +260,12 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Only docs, don't start jenkins jobs
 	if pullRequest.Content.IsDocsOnly() {
-		w.WriteHeader(200)
-		return
+		build, err := config.getBuildByContextAndRepo("docs", baseRepo)
+		if err != nil {
+			log.Warnf("Adding docs build to %s for %d failed: %v", baseRepo, pr.Number, err)
+		} else {
+			builds = append(builds, build)
+		}
 	}
 
 	// get the builds
