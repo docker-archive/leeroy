@@ -67,7 +67,7 @@ Below is a sample leeroy config file:
 
 1. Install the Jenkins [git plugin][jgp] and [notification plugin][jnp].
 
-2. Create a Jenkins job.  Under "Job Notifications", set a Notification
+2. Create a Freestyle Jenkins job.  Under "Job Notifications", set a Notification
 Endpoint with protocol HTTP and the URL pointing to `/notification/jenkins`
 on your Leeroy server.  If your Leeroy server is `leeroy.example.com`, set
 this to `http://leeroy.example.com/notification/jenkins`.
