@@ -33,20 +33,21 @@ func TestCommitsAreSigned(t *testing.T) {
 	}
 }
 
-func TestFilesAreDocs(t *testing.T) {
+func TestHasDocsChanges(t *testing.T) {
 	cases := []struct {
 		files []string
 		valid bool
 	}{
 		{[]string{""}, false},
-		{[]string{"file.md"}, true},
+		{[]string{"file.md"}, false},
 		{[]string{"docs/file.txt"}, true},
 		{[]string{"docs/file.md"}, true},
 		{[]string{"docs/hub/file.md"}, true},
-		{[]string{"man/file.txt"}, true},
+		{[]string{"man/file.txt"}, false},
 		{[]string{"docs/hub/file.md", "man/file.txt"}, true},
-		{[]string{"experimental/file.txt"}, true},
+		{[]string{"experimental/file.txt"}, false},
 		{[]string{"daemon/daemon.go", "experimental/file.txt"}, false},
+		{[]string{"daemon/README.txt", "experimental/file.txt"}, false},
 	}
 
 	for _, c := range cases {
@@ -58,7 +59,7 @@ func TestFilesAreDocs(t *testing.T) {
 		}
 
 		pr := &pullRequestContent{files: files}
-		s := pr.IsDocsOnly()
+		s := pr.HasDocsChanges()
 
 		if s != c.valid {
 			t.Fatalf("expected %v, was %v, for: %s\n", c.valid, s, c.files)
