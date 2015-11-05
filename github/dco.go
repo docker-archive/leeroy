@@ -33,7 +33,7 @@ func (g GitHub) DcoVerified(pr *PullRequest) (bool, error) {
 	switch {
 	case isProposal:
 		labels = []string{"status/1-design-review"}
-	case pr.Content.IsDocsOnly():
+	case pr.Content.IsNonCodeOnly():
 		labels = []string{"status/3-docs-review"}
 	default:
 		labels = []string{"status/0-triage"}

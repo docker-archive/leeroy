@@ -2,10 +2,18 @@ FROM golang:latest
 MAINTAINER Jess Frazelle <jess@docker.com>
 
 RUN go get github.com/Sirupsen/logrus && \
-    go get github.com/crosbymichael/octokat
+    go get github.com/crosbymichael/octokat && \
+	go get github.com/tobi/airbrake-go && \
+	go get github.com/bugsnag/bugsnag-go && \
+	go get github.com/getsentry/raven-go && \
+	go get gopkg.in/gemnasium/logrus-airbrake-hook.v2 && \
+	go get github.com/revel/revel && \
+	go get github.com/go-martini/martini
 
 COPY . /go/src/github.com/docker/leeroy
 RUN go install github.com/docker/leeroy
+RUN go test github.com/docker/leeroy/...
+
 ENV PATH $PATH:/go/bin
 
 EXPOSE 80

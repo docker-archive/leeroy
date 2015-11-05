@@ -258,25 +258,33 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Only docs, don't start jenkins jobs
-	if pullRequest.Content.IsDocsOnly() {
-		w.WriteHeader(200)
-		return
-	}
-
-	// get the builds
-	builds, err := config.getBuilds(baseRepo, false)
-	if err != nil {
-		log.Error(err)
-		w.WriteHeader(500)
-		return
-	}
-
-	// If changes lxc add that build, don't start jenkins jobs
-	if pullRequest.Content.ChangesLXC() {
-		build, err := config.getBuildByContextAndRepo("lxc", baseRepo)
+	var builds []Build
+	// Only run full jobs if there are code related changes
+	if !pullRequest.Content.IsNonCodeOnly() {
+		// get the builds
+		builds, err := config.getBuilds(baseRepo, false)
 		if err != nil {
-			log.Warnf("Adding lxc build to %s for %d failed: %v", baseRepo, pr.Number, err)
+			log.Error(err)
+			w.WriteHeader(500)
+			return
+		}
+
+		// If changes lxc add that build, don't start jenkins jobs
+		if pullRequest.Content.ChangesLXC() {
+			build, err := config.getBuildByContextAndRepo("lxc", baseRepo)
+			if err != nil {
+				log.Warnf("Adding lxc build to %s for %d failed: %v", baseRepo, pr.Number, err)
+			} else {
+				builds = append(builds, build)
+			}
+		}
+	}
+
+	// If there are doc-changes validate them
+	if pullRequest.Content.HasDocsChanges() {
+		build, err := config.getBuildByContextAndRepo("doc", baseRepo)
+		if err != nil {
+			log.Warnf("Adding doc build to %s for %d failed: %v", baseRepo, pr.Number, err)
 		} else {
 			builds = append(builds, build)
 		}

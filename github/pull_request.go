@@ -48,14 +48,33 @@ type pullRequestContent struct {
 	comments []octokat.Comment
 }
 
-func (p *pullRequestContent) IsDocsOnly() bool {
+func (p *pullRequestContent) HasDocsChanges() bool {
 	if len(p.files) == 0 {
 		return false
 	}
 
+	// Did any files in the docs dir change?
 	for _, f := range p.files {
-		if !strings.HasSuffix(f.FileName, ".md") && !strings.HasPrefix(f.FileName, "docs") &&
-			!strings.HasPrefix(f.FileName, "man") && !strings.HasPrefix(f.FileName, "experimental") {
+		if strings.HasPrefix(f.FileName, "docs") {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (p *pullRequestContent) IsNonCodeOnly() bool {
+	if len(p.files) == 0 {
+		return false
+	}
+
+	// if there are any changed files not in docs/man/experimental dirs
+	for _, f := range p.files {
+		if !strings.HasSuffix(f.FileName, ".md") &&
+			!strings.HasSuffix(f.FileName, ".txt") &&
+			!strings.HasPrefix(f.FileName, "docs") &&
+			!strings.HasPrefix(f.FileName, "man") &&
+			!strings.HasPrefix(f.FileName, "experimental") {
 			return false
 		}
 	}
