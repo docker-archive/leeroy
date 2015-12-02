@@ -67,34 +67,6 @@ func TestHasDocsChanges(t *testing.T) {
 	}
 }
 
-func TestFilesChangeLXC(t *testing.T) {
-	cases := []struct {
-		files []string
-		valid bool
-	}{
-		{[]string{""}, false},
-		{[]string{"file.md"}, false},
-		{[]string{"daemon/execdriver/lxc/lxc_template.go"}, true},
-		{[]string{"daemon/execdriver/lxc/driver.go"}, true},
-	}
-
-	for _, c := range cases {
-		var files []*octokat.PullRequestFile
-		for _, f := range c.files {
-			files = append(files, &octokat.PullRequestFile{
-				FileName: f,
-			})
-		}
-
-		pr := &pullRequestContent{files: files}
-		s := pr.ChangesLXC()
-
-		if s != c.valid {
-			t.Fatalf("expected %v, was %v, for: %s\n", c.valid, s, c.files)
-		}
-	}
-}
-
 func TestAlreadyCommented(t *testing.T) {
 	cases := []struct {
 		login string
