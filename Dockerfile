@@ -1,13 +1,33 @@
-FROM debian:jessie
+FROM alpine
 MAINTAINER Jessica Frazelle <jess@docker.com>
 
-ADD https://jesss.s3.amazonaws.com/binaries/leeroy /usr/local/bin/leeroy
-
 EXPOSE 80
+ENV PATH /go/bin:/usr/local/go/bin:$PATH
+ENV GOPATH /go
 
-RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    --no-install-recommends \
-    && chmod +x /usr/local/bin/leeroy
+RUN	apk update && apk add \
+	ca-certificates \
+	&& rm -rf /var/cache/apk/*
 
-ENTRYPOINT [ "/usr/local/bin/leeroy" ]
+COPY . /go/src/github.com/docker/leeroy
+
+RUN buildDeps=' \
+		go \
+		git \
+		gcc \
+		libc-dev \
+		libgcc \
+	' \
+	set -x \
+	&& apk update \
+	&& apk add $buildDeps \
+	&& cd /go/src/github.com/docker/leeroy \
+	&& go get -d -v github.com/docker/leeroy \
+	&& go build -o /usr/bin/leeroy . \
+	&& apk del $buildDeps \
+	&& rm -rf /var/cache/apk/* \
+	&& rm -rf /go \
+	&& echo "Build complete."
+
+
+ENTRYPOINT [ "leeroy" ]
