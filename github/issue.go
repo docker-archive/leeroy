@@ -15,7 +15,7 @@ const (
 
 *The best way to get notified when there are changes in this discussion is by clicking the Subscribe button in the top right.*
 
-The people listed below have appreciated your meaningfull discussion with a random +1:
+The people listed below have appreciated your meaningful discussion with a random +1:
 `
 )
 
