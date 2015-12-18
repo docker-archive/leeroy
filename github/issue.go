@@ -109,7 +109,7 @@ func (g GitHub) maybeOpinion(issueHook *octokat.IssueHook) error {
 
 		if poll.Body != "" {
 			if !strings.Contains(poll.Body, login) {
-				for k, _ := range commenters {
+				for k := range commenters {
 					poll.Body += fmt.Sprintf("\n@%s", k)
 				}
 				if _, err := g.Client().PatchComment(repo, strconv.Itoa(poll.Id), poll.Body); err != nil {
@@ -118,7 +118,7 @@ func (g GitHub) maybeOpinion(issueHook *octokat.IssueHook) error {
 			}
 		} else {
 			tmpl := pollTemplate
-			for k, _ := range commenters {
+			for k := range commenters {
 				tmpl += fmt.Sprintf("\n@%s", k)
 			}
 			if _, err := g.Client().AddComment(repo, issueId, tmpl); err != nil {

@@ -15,19 +15,19 @@ func TestIsMergeable(t *testing.T) {
 	f := false
 	y := true
 	prs := []prExpected{
-		prExpected{
+		{
 			true,
 			&octokat.PullRequest{
 				Mergeable: nil,
 			},
 		},
-		prExpected{
+		{
 			true,
 			&octokat.PullRequest{
 				Mergeable: &y,
 			},
 		},
-		prExpected{
+		{
 			false,
 			&octokat.PullRequest{
 				Mergeable: &f,

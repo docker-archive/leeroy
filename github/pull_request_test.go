@@ -17,7 +17,7 @@ func TestCommitsAreSigned(t *testing.T) {
 
 	for message, valid := range cases {
 		commits := []octokat.Commit{
-			octokat.Commit{
+			{
 				Commit: &octokat.CommitCommit{
 					Message: message,
 				},
@@ -97,7 +97,7 @@ func TestAlreadyCommented(t *testing.T) {
 
 	for _, c := range cases {
 		comments := []octokat.Comment{
-			octokat.Comment{
+			{
 				User: octokat.User{
 					Login: c.login,
 				},
