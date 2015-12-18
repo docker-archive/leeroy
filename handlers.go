@@ -26,13 +26,13 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// decode the body
 	decoder := json.NewDecoder(r.Body)
-	var j jenkins.JenkinsResponse
+	var j jenkins.Response
 	if err := decoder.Decode(&j); err != nil {
 		logrus.Errorf("decoding the jenkins request as json failed: %v", err)
 		return
 	}
 
-	logrus.Infof("Received Jenkins notification for %s %d (%s): %s", j.Name, j.Build.Number, j.Build.Url, j.Build.Phase)
+	logrus.Infof("Received Jenkins notification for %s %d (%s): %s", j.Name, j.Build.Number, j.Build.URL, j.Build.Phase)
 
 	// if the phase is not started or completed
 	// we don't care
@@ -75,7 +75,7 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// update the github status
-	if err := config.updateGithubStatus(j.Build.Parameters.GitBaseRepo, build.Context, j.Build.Parameters.GitSha, state, desc, j.Build.Url+"console"); err != nil {
+	if err := config.updateGithubStatus(j.Build.Parameters.GitBaseRepo, build.Context, j.Build.Parameters.GitSha, state, desc, j.Build.URL+"console"); err != nil {
 		logrus.Error(err)
 	}
 

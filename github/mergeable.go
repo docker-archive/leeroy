@@ -6,6 +6,7 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
+// IsMergeable makes sure the pull request can be merged
 func (g GitHub) IsMergeable(pr *PullRequest) (mergeable bool, err error) {
 	// assume the PR is mergable unless we specifically set to false
 	// because mergable true is equivalent to skip

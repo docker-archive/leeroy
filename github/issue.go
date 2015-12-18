@@ -19,6 +19,7 @@ The people listed below have appreciated your meaningful discussion with a rando
 `
 )
 
+// IssueInfoCheck makes sure an issue has the required information from the user
 func (g GitHub) IssueInfoCheck(issueHook *octokat.IssueHook) error {
 	body := strings.ToLower(issueHook.Issue.Body)
 	title := strings.ToLower(issueHook.Issue.Title)
@@ -49,6 +50,7 @@ func (g GitHub) IssueInfoCheck(issueHook *octokat.IssueHook) error {
 	return nil
 }
 
+// LabelIssueComment checks if someone has claimed dibs on this issue
 func (g GitHub) LabelIssueComment(issueHook *octokat.IssueHook) error {
 	if err := g.maybeClaimIssue(issueHook); err != nil {
 		return err
@@ -58,7 +60,7 @@ func (g GitHub) LabelIssueComment(issueHook *octokat.IssueHook) error {
 }
 
 func (g GitHub) maybeClaimIssue(issueHook *octokat.IssueHook) error {
-	var labelmap map[string]string = map[string]string{
+	labelmap := map[string]string{
 		"#dibs":    "status/claimed",
 		"#claimed": "status/claimed",
 		"#mine":    "status/claimed",
@@ -91,8 +93,8 @@ func (g GitHub) maybeOpinion(issueHook *octokat.IssueHook) error {
 		}
 
 		repo := getRepo(issueHook.Repo)
-		issueId := strconv.Itoa(issueHook.Issue.Number)
-		comments, err := g.Client().Comments(repo, issueId, options)
+		issueID := strconv.Itoa(issueHook.Issue.Number)
+		comments, err := g.Client().Comments(repo, issueID, options)
 		if err != nil {
 			return err
 		}
@@ -121,7 +123,7 @@ func (g GitHub) maybeOpinion(issueHook *octokat.IssueHook) error {
 			for k := range commenters {
 				tmpl += fmt.Sprintf("\n@%s", k)
 			}
-			if _, err := g.Client().AddComment(repo, issueId, tmpl); err != nil {
+			if _, err := g.Client().AddComment(repo, issueID, tmpl); err != nil {
 				return err
 			}
 		}

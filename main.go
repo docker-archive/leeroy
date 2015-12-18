@@ -13,7 +13,9 @@ import (
 )
 
 const (
-	VERSION        = "v0.1.0"
+	// VERSION is the version
+	VERSION = "v0.1.0"
+	// DEFAULTCONTEXT is the default github context for a build
 	DEFAULTCONTEXT = "janky"
 )
 
@@ -28,6 +30,7 @@ var (
 	config Config
 )
 
+// Config describes the leeroy config file
 type Config struct {
 	Jenkins      jenkins.Client `json:"jenkins"`
 	BuildCommits string         `json:"build_commits"`
@@ -38,6 +41,7 @@ type Config struct {
 	Pass         string         `json:"pass"`
 }
 
+// Build describes the paramaters for a build
 type Build struct {
 	Repo         string `json:"github_repo"`
 	Job          string `json:"jenkins_job_name"`

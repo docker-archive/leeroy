@@ -11,9 +11,10 @@ import (
 	"github.com/crosbymichael/octokat"
 )
 
+// Commit describes information in a commit
 type Commit struct {
 	CommentsURL string `json:"comments_url,omitempty"`
-	HtmlURL     string `json:"html_url,omitempty"`
+	HTMLURL     string `json:"html_url,omitempty"`
 	Sha         string `json:"sha,omitempty"`
 	URL         string `json:"url,omitempty"`
 }
@@ -56,7 +57,7 @@ func (c Config) getBuildByContextAndRepo(context, repo string) (build Build, err
 	return build, fmt.Errorf("Could not find config for context: %s, repo: %s", context, repo)
 }
 
-func (c Config) updateGithubStatus(repoName, context, sha, state, desc, buildUrl string) error {
+func (c Config) updateGithubStatus(repoName, context, sha, state, desc, buildURL string) error {
 	// parse git repo for username
 	// and repo name
 	r := strings.SplitN(repoName, "/", 2)
@@ -75,7 +76,7 @@ func (c Config) updateGithubStatus(repoName, context, sha, state, desc, buildUrl
 	status := &octokat.StatusOptions{
 		State:       state,
 		Description: desc,
-		URL:         buildUrl,
+		URL:         buildURL,
 		Context:     context,
 	}
 	if _, err := gh.SetStatus(repo, sha, status); err != nil {
@@ -186,9 +187,9 @@ func (c Config) scheduleJenkinsBuild(baseRepo string, number int, build Build) e
 		// setup the jenkins client
 		j := &c.Jenkins
 		// setup the parameters
-		htmlUrl := fmt.Sprintf("https://github.com/%s/pull/%d", baseRepo, pr.Number)
+		htmlURL := fmt.Sprintf("https://github.com/%s/pull/%d", baseRepo, pr.Number)
 		headRepo := fmt.Sprintf("%s/%s", pr.Head.Repo.Owner.Login, pr.Head.Repo.Name)
-		parameters := fmt.Sprintf("GIT_BASE_REPO=%s&GIT_HEAD_REPO=%s&GIT_SHA1=%s&GITHUB_URL=%s&PR=%d&BASE_BRANCH=%s", baseRepo, headRepo, sha, htmlUrl, pr.Number, pr.Base.Ref)
+		parameters := fmt.Sprintf("GIT_BASE_REPO=%s&GIT_HEAD_REPO=%s&GIT_SHA1=%s&GITHUB_URL=%s&PR=%d&BASE_BRANCH=%s", baseRepo, headRepo, sha, htmlURL, pr.Number, pr.Base.Ref)
 		// schedule the build
 		if err := j.BuildWithParameters(build.Job, parameters); err != nil {
 			return fmt.Errorf("scheduling jenkins build failed: %v", err)

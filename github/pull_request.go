@@ -13,6 +13,7 @@ var (
 	dcoRegex = regexp.MustCompile("(?m)(Docker-DCO-1.1-)?Signed-off-by: ([^<]+) <([^<>@]+@[^<>]+)>( \\(github: ([a-zA-Z0-9][a-zA-Z0-9-]+)\\))?")
 )
 
+// PullRequest describes a github pull request
 type PullRequest struct {
 	Hook    *octokat.PullRequestHook
 	Repo    octokat.Repo
@@ -20,6 +21,7 @@ type PullRequest struct {
 	*octokat.PullRequest
 }
 
+// LoadPullRequest takes an incoming PullRequestHook and converts it to the PullRequest type
 func (g GitHub) LoadPullRequest(hook *octokat.PullRequestHook) (*PullRequest, error) {
 	pr := hook.PullRequest
 	repo := nameWithOwner(hook.Repo)
@@ -37,6 +39,7 @@ func (g GitHub) LoadPullRequest(hook *octokat.PullRequestHook) (*PullRequest, er
 	}, nil
 }
 
+// ReleaseBase checks if the pull request is beinng merged into the release branch
 func (pr PullRequest) ReleaseBase() bool {
 	return pr.Base.Ref == "release"
 }

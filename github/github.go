@@ -2,11 +2,13 @@ package github
 
 import "github.com/crosbymichael/octokat"
 
+// GitHub holds the client information for connecting to the GitHub API
 type GitHub struct {
 	AuthToken string
 	User      string
 }
 
+// Client initializes the authorization with the GitHub API
 func (g GitHub) Client() *octokat.Client {
 	gh := octokat.NewClient()
 	gh = gh.WithToken(g.AuthToken)

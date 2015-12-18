@@ -11,12 +11,12 @@ func (g GitHub) successStatus(repo octokat.Repo, sha, context, description strin
 	return err
 }
 
-func (g GitHub) failureStatus(repo octokat.Repo, sha, context, description, targetUrl string) error {
+func (g GitHub) failureStatus(repo octokat.Repo, sha, context, description, targetURL string) error {
 	_, err := g.Client().SetStatus(repo, sha, &octokat.StatusOptions{
 		State:       "failure",
 		Context:     context,
 		Description: description,
-		URL:         targetUrl,
+		URL:         targetURL,
 	})
 	return err
 }

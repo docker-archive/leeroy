@@ -7,35 +7,40 @@ import (
 	"net/http"
 )
 
+// Client contains the information for connecting to a jenkins instance
 type Client struct {
 	Baseurl  string `json:"base_url"`
 	Username string `json:"username"`
 	Token    string `json:"token"`
 }
 
-type JenkinsResponse struct {
-	Name  string       `json:"name"`
-	Build JenkinsBuild `json:"build"`
+// Response describes the response returned by jenkins
+type Response struct {
+	Name  string `json:"name"`
+	Build Build  `json:"build"`
 }
 
-type JenkinsBuild struct {
-	Number     int                    `json:"number"`
-	Url        string                 `json:"full_url"`
-	Phase      string                 `json:"phase"`
-	Status     string                 `json:"status"`
-	Parameters JenkinsBuildParameters `json:"parameters"`
+// Build describes a jenkins build
+type Build struct {
+	Number     int             `json:"number"`
+	URL        string          `json:"full_url"`
+	Phase      string          `json:"phase"`
+	Status     string          `json:"status"`
+	Parameters BuildParameters `json:"parameters"`
 }
 
-type JenkinsBuildParameters struct {
+// BuildParameters decribes the jenkins build parameters
+type BuildParameters struct {
 	GitBaseRepo string `json:"GIT_BASE_REPO"`
 	GitSha      string `json:"GIT_SHA1"`
 }
 
+// Request describes a request to jenkins
 type Request struct {
 	Parameters []map[string]string `json:"parameter"`
 }
 
-// Sets the authentication for the Jenkins client
+// New sets the authentication for the Jenkins client
 // Password can be an API token as described in:
 // https://wiki.jenkins-ci.org/display/JENKINS/Authenticating+scripted+clients
 func New(uri, username, token string) *Client {
@@ -46,6 +51,7 @@ func New(uri, username, token string) *Client {
 	}
 }
 
+// Build sends a build request to jenkins
 func (c *Client) Build(job string, data Request) error {
 	// encode the request data
 	d, err := json.Marshal(data)
@@ -79,6 +85,7 @@ func (c *Client) Build(job string, data Request) error {
 	return nil
 }
 
+// BuildWithParameters sends a build request with parameters to jenkins
 func (c *Client) BuildWithParameters(job string, parameters string) error {
 	// set up the request
 	url := fmt.Sprintf("%s/job/%s/buildWithParameters?%s", c.Baseurl, job, parameters)

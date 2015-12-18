@@ -13,6 +13,7 @@ const (
 	groupDistribution = "group/distribution"
 )
 
+// DcoVerified checks if the pull request has been properly signed
 func (g GitHub) DcoVerified(pr *PullRequest) (bool, error) {
 	// we only want the prs that are opened/synchronized
 	if !pr.Hook.IsOpened() && !pr.Hook.IsSynchronize() {
