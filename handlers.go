@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
 	"github.com/docker/leeroy/github"
 	"github.com/docker/leeroy/jenkins"
@@ -19,7 +19,7 @@ func pingHandler(w http.ResponseWriter, r *http.Request) {
 
 func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
-		fmt.Errorf("%q is not a valid method", r.Method)
+		logrus.Errorf("%q is not a valid method", r.Method)
 		w.WriteHeader(405)
 		return
 	}
@@ -28,11 +28,11 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var j jenkins.JenkinsResponse
 	if err := decoder.Decode(&j); err != nil {
-		log.Errorf("decoding the jenkins request as json failed: %v", err)
+		logrus.Errorf("decoding the jenkins request as json failed: %v", err)
 		return
 	}
 
-	log.Infof("Received Jenkins notification for %s %d (%s): %s", j.Name, j.Build.Number, j.Build.Url, j.Build.Phase)
+	logrus.Infof("Received Jenkins notification for %s %d (%s): %s", j.Name, j.Build.Number, j.Build.Url, j.Build.Phase)
 
 	// if the phase is not started or completed
 	// we don't care
@@ -63,20 +63,20 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 			state = "error"
 			desc += " has encountered an error"
 		default:
-			log.Errorf("Did not understand %q build status. Aborting.", j.Build.Status)
+			logrus.Errorf("Did not understand %q build status. Aborting.", j.Build.Status)
 			return
 		}
 	}
 	// get the build
 	build, err := config.getBuildByJob(j.Name)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		return
 	}
 
 	// update the github status
 	if err := config.updateGithubStatus(j.Build.Parameters.GitBaseRepo, build.Context, j.Build.Parameters.GitSha, state, desc, j.Build.Url+"console"); err != nil {
-		log.Error(err)
+		logrus.Error(err)
 	}
 
 	return
@@ -87,7 +87,7 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch event {
 	case "":
-		log.Error("Got GitHub notification without a type")
+		logrus.Error("Got GitHub notification without a type")
 	case "ping":
 		w.WriteHeader(200)
 	case "issues", "issue_comment":
@@ -97,40 +97,40 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 	case "pull_request_review_comment":
 		handlePullRequestReviewComment(w, r)
 	default:
-		fmt.Errorf("Got unknown GitHub notification event type: %s", event)
+		logrus.Errorf("Got unknown GitHub notification event type: %s", event)
 	}
 }
 
 func handleIssue(w http.ResponseWriter, r *http.Request) {
-	log.Debugf("Got an issue hook")
+	logrus.Debugf("Got an issue hook")
 
 	// parse the issue
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Errorf("Error reading github issue handler body: %v", err)
+		logrus.Errorf("Error reading github issue handler body: %v", err)
 		w.WriteHeader(500)
 		return
 	}
 
 	issueHook, err := octokat.ParseIssueHook(body)
 	if err != nil {
-		log.Errorf("Error parsing issue hook: %v", err)
+		logrus.Errorf("Error parsing issue hook: %v", err)
 		w.WriteHeader(500)
 		return
 	}
 
 	// get the build
 	baseRepo := fmt.Sprintf("%s/%s", issueHook.Repo.Owner.Login, issueHook.Repo.Name)
-	log.Debugf("Issue is for repo: %s", baseRepo)
+	logrus.Debugf("Issue is for repo: %s", baseRepo)
 	build, err := config.getBuildByContextAndRepo("janky", baseRepo)
 	if err != nil {
-		log.Warnf("could not find build for repo %s for issue handler, skipping: %v", baseRepo, err)
+		logrus.Warnf("could not find build for repo %s for issue handler, skipping: %v", baseRepo, err)
 		return
 	}
 
 	// if we do not handle issues for this build just return
 	if !build.HandleIssues {
-		log.Warnf("Not configured to handle issues for %s", baseRepo)
+		logrus.Warnf("Not configured to handle issues for %s", baseRepo)
 		return
 	}
 
@@ -139,21 +139,21 @@ func handleIssue(w http.ResponseWriter, r *http.Request) {
 		User:      config.GHUser,
 	}
 
-	log.Infof("Received GitHub issue notification for %s %d (%s): %s", baseRepo, issueHook.Issue.Number, issueHook.Issue.URL, issueHook.Action)
+	logrus.Infof("Received GitHub issue notification for %s %d (%s): %s", baseRepo, issueHook.Issue.Number, issueHook.Issue.URL, issueHook.Action)
 
 	// if it is not a comment or an opened issue
 	// return becuase we dont care
 	if !issueHook.IsComment() && !issueHook.IsOpened() {
-		log.Debugf("Ignoring issue hook action %q", issueHook.Action)
+		logrus.Debugf("Ignoring issue hook action %q", issueHook.Action)
 		return
 	}
 
 	// if the issue has just been opened
 	// parse if ENEEDMOREINFO
 	if issueHook.IsOpened() {
-		log.Debug("Issue is opened, checking if we have correct info")
+		logrus.Debug("Issue is opened, checking if we have correct info")
 		if err := g.IssueInfoCheck(issueHook); err != nil {
-			log.Errorf("Error checking if issue opened needs more info: %v", err)
+			logrus.Errorf("Error checking if issue opened needs more info: %v", err)
 			w.WriteHeader(500)
 			return
 		}
@@ -168,7 +168,7 @@ func handleIssue(w http.ResponseWriter, r *http.Request) {
 
 	if issueHook.Issue.PullRequest.HTMLURL != "" {
 		if err := g.MoveTriageForward(issueHook.Repo, issueHook.Issue.Number, issueHook.Comment); err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			w.WriteHeader(500)
 			return
 		}
@@ -180,7 +180,7 @@ func handleIssue(w http.ResponseWriter, r *http.Request) {
 	// handle if it is an issue comment
 	// apply approproate labels
 	if err := g.LabelIssueComment(issueHook); err != nil {
-		log.Errorf("Error applying labels to issue comment: %v", err)
+		logrus.Errorf("Error applying labels to issue comment: %v", err)
 		w.WriteHeader(500)
 		return
 	}
@@ -189,19 +189,19 @@ func handleIssue(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlePullRequest(w http.ResponseWriter, r *http.Request) {
-	log.Debugf("Got a pull request hook")
+	logrus.Debugf("Got a pull request hook")
 
 	// parse the pull request
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Errorf("Error reading github pull request handler body: %v", err)
+		logrus.Errorf("Error reading github pull request handler body: %v", err)
 		w.WriteHeader(500)
 		return
 	}
 
 	prHook, err := octokat.ParsePullRequestHook(body)
 	if err != nil {
-		log.Errorf("Error parsing pull request hook: %v", err)
+		logrus.Errorf("Error parsing pull request hook: %v", err)
 		w.WriteHeader(500)
 		return
 	}
@@ -209,11 +209,11 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 	pr := prHook.PullRequest
 	baseRepo := fmt.Sprintf("%s/%s", pr.Base.Repo.Owner.Login, pr.Base.Repo.Name)
 
-	log.Infof("Received GitHub pull request notification for %s %d (%s): %s", baseRepo, pr.Number, pr.URL, prHook.Action)
+	logrus.Infof("Received GitHub pull request notification for %s %d (%s): %s", baseRepo, pr.Number, pr.URL, prHook.Action)
 
 	// ignore everything we don't care about
 	if prHook.Action != "opened" && prHook.Action != "reopened" && prHook.Action != "synchronize" {
-		log.Debugf("Ignoring PR hook action %q", prHook.Action)
+		logrus.Debugf("Ignoring PR hook action %q", prHook.Action)
 		return
 	}
 
@@ -224,7 +224,7 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 
 	pullRequest, err := g.LoadPullRequest(prHook)
 	if err != nil {
-		log.Errorf("Error loading the pull request: %v", err)
+		logrus.Errorf("Error loading the pull request: %v", err)
 		w.WriteHeader(500)
 		return
 	}
@@ -232,28 +232,28 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 	valid, err := g.DcoVerified(pullRequest)
 
 	if err != nil {
-		log.Errorf("Error validating DCO: %v", err)
+		logrus.Errorf("Error validating DCO: %v", err)
 		w.WriteHeader(500)
 		return
 	}
 
 	// DCO not valid, we don't start the build
 	if !valid {
-		log.Errorf("Invalid DCO for %s #%d. Aborting build", baseRepo, pr.Number)
+		logrus.Errorf("Invalid DCO for %s #%d. Aborting build", baseRepo, pr.Number)
 		w.WriteHeader(200)
 		return
 	}
 
 	mergeable, err := g.IsMergeable(pullRequest)
 	if err != nil {
-		log.Errorf("Error checking if PR is mergeable: %v", err)
+		logrus.Errorf("Error checking if PR is mergeable: %v", err)
 		w.WriteHeader(500)
 		return
 	}
 
 	// PR is not mergeable, so don't start the build
 	if !mergeable {
-		log.Errorf("Unmergeable PR for %s #%d. Aborting build", baseRepo, pr.Number)
+		logrus.Errorf("Unmergeable PR for %s #%d. Aborting build", baseRepo, pr.Number)
 		w.WriteHeader(200)
 		return
 	}
@@ -265,7 +265,7 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 		var err error
 		builds, err = config.getBuilds(baseRepo, false)
 		if err != nil {
-			log.Warn(err)
+			logrus.Warn(err)
 		}
 	}
 
@@ -273,7 +273,7 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 	if pullRequest.Content.HasDocsChanges() {
 		build, err := config.getBuildByContextAndRepo("doc", baseRepo)
 		if err != nil {
-			log.Warnf("Adding doc build to %s for %d failed: %v", baseRepo, pr.Number, err)
+			logrus.Warnf("Adding doc build to %s for %d failed: %v", baseRepo, pr.Number, err)
 		} else {
 			builds = append(builds, build)
 		}
@@ -282,7 +282,7 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 	// schedule the jenkins builds
 	for _, build := range builds {
 		if err := config.scheduleJenkinsBuild(baseRepo, pr.Number, build); err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			w.WriteHeader(500)
 		}
 	}
@@ -309,7 +309,7 @@ func customBuildHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method != "POST" {
-		fmt.Errorf("%q is not a valid method", r.Method)
+		logrus.Errorf("%q is not a valid method", r.Method)
 		w.WriteHeader(405)
 		return
 	}
@@ -318,7 +318,7 @@ func customBuildHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var b requestBuild
 	if err := decoder.Decode(&b); err != nil {
-		log.Errorf("decoding the retry request as json failed: %v", err)
+		logrus.Errorf("decoding the retry request as json failed: %v", err)
 		w.WriteHeader(500)
 		return
 	}
@@ -331,7 +331,7 @@ func customBuildHandler(w http.ResponseWriter, r *http.Request) {
 		// get all the builds
 		builds, err = config.getBuilds(b.Repo, false)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			w.WriteHeader(500)
 			return
 		}
@@ -340,7 +340,7 @@ func customBuildHandler(w http.ResponseWriter, r *http.Request) {
 		// get the build
 		build, err := config.getBuildByContextAndRepo(b.Context, b.Repo)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			w.WriteHeader(500)
 			return
 		}
@@ -350,7 +350,7 @@ func customBuildHandler(w http.ResponseWriter, r *http.Request) {
 	// schedule the jenkins builds
 	for _, build := range builds {
 		if err := config.scheduleJenkinsBuild(b.Repo, b.Number, build); err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			w.WriteHeader(500)
 		}
 	}
@@ -372,7 +372,7 @@ func cronBuildHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method != "POST" {
-		fmt.Errorf("%q is not a valid method", r.Method)
+		logrus.Errorf("%q is not a valid method", r.Method)
 		w.WriteHeader(405)
 		return
 	}
@@ -381,7 +381,7 @@ func cronBuildHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var b requestBuild
 	if err := decoder.Decode(&b); err != nil {
-		log.Errorf("decoding the retry request as json failed: %v", err)
+		logrus.Errorf("decoding the retry request as json failed: %v", err)
 		w.WriteHeader(500)
 		return
 	}
@@ -389,7 +389,7 @@ func cronBuildHandler(w http.ResponseWriter, r *http.Request) {
 	// get the build
 	build, err := config.getBuildByContextAndRepo(b.Context, b.Repo)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		w.WriteHeader(500)
 		return
 	}
@@ -397,7 +397,7 @@ func cronBuildHandler(w http.ResponseWriter, r *http.Request) {
 	// get PRs that have failed for the context
 	nums, err := config.getFailedPRs(b.Context, b.Repo)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		w.WriteHeader(500)
 		return
 	}
@@ -405,7 +405,7 @@ func cronBuildHandler(w http.ResponseWriter, r *http.Request) {
 	for _, prNum := range nums {
 		// schedule the jenkins build
 		if err := config.scheduleJenkinsBuild(b.Repo, prNum, build); err != nil {
-			log.Error(err)
+			logrus.Error(err)
 		}
 	}
 
@@ -416,7 +416,7 @@ func cronBuildHandler(w http.ResponseWriter, r *http.Request) {
 func handlePullRequestReviewComment(w http.ResponseWriter, r *http.Request) {
 	hook, err := github.ParsePullRequestReviewCommentHook(r.Body)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		w.WriteHeader(500)
 		return
 	}
@@ -432,7 +432,7 @@ func handlePullRequestReviewComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := g.MoveTriageForward(hook.Repo, hook.PullRequest.Number, hook.Comment); err != nil {
-		log.Error(err)
+		logrus.Error(err)
 		w.WriteHeader(500)
 		return
 	}

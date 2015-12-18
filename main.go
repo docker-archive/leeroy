@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/docker/leeroy/jenkins"
 )
 
@@ -61,7 +61,7 @@ func init() {
 func main() {
 	// set log level
 	if debug {
-		log.SetLevel(log.DebugLevel)
+		logrus.SetLevel(logrus.DebugLevel)
 	}
 
 	if version {
@@ -71,16 +71,16 @@ func main() {
 
 	// read the config file
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
-		log.Errorf("config file does not exist: %s", configFile)
+		logrus.Errorf("config file does not exist: %s", configFile)
 		return
 	}
 	c, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		log.Errorf("could not read config file: %v", err)
+		logrus.Errorf("could not read config file: %v", err)
 		return
 	}
 	if err := json.Unmarshal(c, &config); err != nil {
-		log.Errorf("error parsing config file as json: %v", err)
+		logrus.Errorf("error parsing config file as json: %v", err)
 		return
 	}
 
@@ -111,10 +111,10 @@ func main() {
 		Handler: mux,
 	}
 
-	log.Printf("Starting server on port %q", port)
+	logrus.Printf("Starting server on port %q", port)
 	if certFile != "" && keyFile != "" {
-		log.Fatal(server.ListenAndServeTLS(certFile, keyFile))
+		logrus.Fatal(server.ListenAndServeTLS(certFile, keyFile))
 	} else {
-		log.Fatal(server.ListenAndServe())
+		logrus.Fatal(server.ListenAndServe())
 	}
 }

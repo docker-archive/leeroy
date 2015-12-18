@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
 )
 
@@ -82,14 +82,14 @@ func (c Config) updateGithubStatus(repoName, context, sha, state, desc, buildUrl
 		return fmt.Errorf("setting status for repo: %s, sha: %s failed: %v", repoName, sha, err)
 	}
 
-	log.Infof("Setting status on %s %s to %s for %s succeeded", repoName, sha, state, context)
+	logrus.Infof("Setting status on %s %s to %s for %s succeeded", repoName, sha, state, context)
 	return nil
 }
 
 func hasStatus(gh *octokat.Client, repo octokat.Repo, sha, context string) bool {
 	statuses, err := gh.Statuses(repo, sha, &octokat.Options{})
 	if err != nil {
-		log.Warnf("getting status for %s for %s/%s failed: %v", sha, repo.UserName, repo.Name, err)
+		logrus.Warnf("getting status for %s for %s/%s failed: %v", sha, repo.UserName, repo.Name, err)
 		return false
 	}
 

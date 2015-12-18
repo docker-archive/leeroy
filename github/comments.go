@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
 )
 
@@ -38,18 +38,18 @@ Ammending updates the existing PR. You **DO NOT** need to open a new one.
 
 func (g GitHub) addNeedMoreInfoComment(repo octokat.Repo, issueNum int, content *pullRequestContent) error {
 	comment := `Hi!
-	
+
 Please read this important information about creating issues.
 
 If you are reporting a new issue, make sure that we do not have any duplicates already open. You can ensure this by searching the issue list for this repository. If there is a duplicate, please close your issue and add a comment to the existing issue instead.
 
 If you suspect your issue is a bug, please edit your issue description to include the BUG REPORT INFORMATION shown below. If you fail to provide this information within 7 days, we cannot debug your issue and will close it. We will, however, reopen it if you later provide the information.
 
-This is an automated, informational response. 
+This is an automated, informational response.
 
 Thank you.
 
-For more information about reporting issues, see https://github.com/docker/docker/blob/master/CONTRIBUTING.md#reporting-other-issues 
+For more information about reporting issues, see https://github.com/docker/docker/blob/master/CONTRIBUTING.md#reporting-other-issues
 
 -----------------------------
 BUG REPORT INFORMATION
@@ -108,6 +108,6 @@ func (g GitHub) addUniqueComment(repo octokat.Repo, prNum, comment, commentType 
 		return err
 	}
 
-	log.Infof("Added comment about %q PR/issue %s", commentType, prNum)
+	logrus.Infof("Added comment about %q PR/issue %s", commentType, prNum)
 	return nil
 }

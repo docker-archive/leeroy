@@ -3,7 +3,7 @@ package github
 import (
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
 )
 
@@ -54,13 +54,13 @@ func (g GitHub) DcoVerified(pr *PullRequest) (bool, error) {
 	// add labels if there are any
 	// only add labels to new PRs not sync
 	if len(labels) > 0 && pr.Hook.IsOpened() {
-		log.Debugf("Adding labels %#v to pr %d", labels, pr.Hook.Number)
+		logrus.Debugf("Adding labels %#v to pr %d", labels, pr.Hook.Number)
 
 		if err := g.addLabel(pr.Repo, pr.Hook.Number, labels...); err != nil {
 			return false, err
 		}
 
-		log.Infof("Added labels %#v to pr %d", labels, pr.Hook.Number)
+		logrus.Infof("Added labels %#v to pr %d", labels, pr.Hook.Number)
 	}
 
 	var verified bool

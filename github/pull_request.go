@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
 )
 
@@ -114,7 +114,7 @@ func (p *pullRequestContent) AlreadyCommented(commentType, user string) bool {
 	for _, c := range p.comments {
 		// if we already made the comment return nil
 		if strings.ToLower(c.User.Login) == user && strings.Contains(c.Body, commentType) {
-			log.Debugf("Already made comment about %q on PR %s", commentType, p.id)
+			logrus.Debugf("Already made comment about %q on PR %s", commentType, p.id)
 			return true
 		}
 	}

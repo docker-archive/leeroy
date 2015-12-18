@@ -3,7 +3,7 @@ package github
 import (
 	"strconv"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 )
 
 func (g GitHub) IsMergeable(pr *PullRequest) (mergeable bool, err error) {
@@ -19,7 +19,7 @@ func (g GitHub) IsMergeable(pr *PullRequest) (mergeable bool, err error) {
 	commentType := "merge conflicts"
 	if !isMergeable(pr) {
 		mergeable = false
-		log.Debugf("Found pr %d was not mergable, going to add comment", pr.Hook.Number)
+		logrus.Debugf("Found pr %d was not mergable, going to add comment", pr.Hook.Number)
 
 		// add a comment
 		comment := "Looks like we would not be able to merge this PR because of merge conflicts. Please rebase, fix conflicts, and force push to your branch."
