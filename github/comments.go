@@ -37,19 +37,16 @@ Ammending updates the existing PR. You **DO NOT** need to open a new one.
 }
 
 func (g GitHub) addNeedMoreInfoComment(repo octokat.Repo, issueNum int, content *pullRequestContent) error {
-	comment := `Hi!
-
-Please read this important information about creating issues.
-
+	comment := `
 If you are reporting a new issue, make sure that we do not have any duplicates already open. You can ensure this by searching the issue list for this repository. If there is a duplicate, please close your issue and add a comment to the existing issue instead.
 
 If you suspect your issue is a bug, please edit your issue description to include the BUG REPORT INFORMATION shown below. If you fail to provide this information within 7 days, we cannot debug your issue and will close it. We will, however, reopen it if you later provide the information.
 
-This is an automated, informational response.
+For more information about reporting issues, see [CONTRIBUTING.md](https://github.com/docker/docker/blob/master/CONTRIBUTING.md#reporting-other-issues).
 
-Thank you.
+**You _don't_ have to include this information if this is a _feature request_**
 
-For more information about reporting issues, see https://github.com/docker/docker/blob/master/CONTRIBUTING.md#reporting-other-issues
+(This is an automated, informational response)
 
 -----------------------------
 BUG REPORT INFORMATION
@@ -58,7 +55,6 @@ Use the commands below to provide key information from your environment:
 
 ` + "`docker version`" + `:
 ` + "`docker info`" + `:
-` + "`uname -a`" + `:
 
 Provide additional environment details (AWS, VirtualBox, physical, etc.):
 
