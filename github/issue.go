@@ -13,9 +13,12 @@ const (
 	pollKey      = "USER POLL"
 	pollTemplate = `*USER POLL*
 
-*The best way to get notified when there are changes in this discussion is by clicking the Subscribe button in the top right.*
+*The best way to get notified of updates is to use the _Subscribe_ button on this page.*
 
-The people listed below have appreciated your meaningful discussion with a random +1:
+Please don't use "+1" or "I have this too" comments on issues. We automatically
+collect those comments to keep the thread short.
+
+The people listed below have upvoted this issue by leaving a +1 comment:
 `
 )
 
@@ -104,7 +107,7 @@ func (g GitHub) maybeOpinion(issueHook *octokat.IssueHook) error {
 		for _, c := range comments {
 			if strings.ToLower(c.User.Login) == g.User && strings.Contains(c.Body, pollKey) {
 				poll = c
-			} else if strings.TrimSpace(c.Body) == "+1" {
+			} else if strings.TrimSpace(c.Body) == "+1" || strings.TrimSpace(c.Body) == ":+1:" {
 				commenters[c.User.Login] = c.Id
 			}
 		}
