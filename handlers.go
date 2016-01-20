@@ -283,7 +283,7 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 	if pullRequest.Content.HasVendoringChanges() {
 		build, err := config.getBuildByContextAndRepo("vendor", baseRepo)
 		if err != nil {
-			logrus.Warnf("Adding doc build to %s for %d failed: %v", baseRepo, pr.Number, err)
+			logrus.Warnf("Adding vendor build to %s for %d failed: %v", baseRepo, pr.Number, err)
 		} else {
 			builds = append(builds, build)
 		}
