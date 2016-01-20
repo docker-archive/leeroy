@@ -51,6 +51,21 @@ type pullRequestContent struct {
 	comments []octokat.Comment
 }
 
+func (p *pullRequestContent) HasVendoringChanges() bool {
+	if len(p.files) == 0 {
+		return false
+	}
+
+	// Did any files in the vendor dir change?
+	for _, f := range p.files {
+		if anyFolders(f.FileName, "vendor", "hack/vendor.sh", "hack/.vendor-helper.sh") {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (p *pullRequestContent) HasDocsChanges() bool {
 	if len(p.files) == 0 {
 		return false
@@ -196,6 +211,15 @@ func (g *GitHub) getContent(repo octokat.Repo, id int, isPR bool) (*pullRequestC
 		commits:  commits,
 		comments: comments,
 	}, nil
+}
+
+func anyFolders(fileName string, folders ...string) bool {
+	for _, f := range folders {
+		if strings.HasPrefix(fileName, f) {
+			return true
+		}
+	}
+	return false
 }
 
 func anyPackage(fileName string, packages ...string) bool {

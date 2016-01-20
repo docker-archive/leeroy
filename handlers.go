@@ -279,6 +279,16 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// If there are vendoring changes validate them
+	if pullRequest.Content.HasVendoringChanges() {
+		build, err := config.getBuildByContextAndRepo("vendor", baseRepo)
+		if err != nil {
+			logrus.Warnf("Adding doc build to %s for %d failed: %v", baseRepo, pr.Number, err)
+		} else {
+			builds = append(builds, build)
+		}
+	}
+
 	// schedule the jenkins builds
 	for _, build := range builds {
 		if err := config.scheduleJenkinsBuild(baseRepo, pr.Number, build); err != nil {
