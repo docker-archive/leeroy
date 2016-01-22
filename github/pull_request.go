@@ -58,7 +58,7 @@ func (p *pullRequestContent) HasVendoringChanges() bool {
 
 	// Did any files in the vendor dir change?
 	for _, f := range p.files {
-		if anyFolders(f.FileName, "vendor", "hack/vendor.sh", "hack/.vendor-helper.sh") {
+		if isVendor(f.FileName) {
 			return true
 		}
 	}
@@ -88,11 +88,10 @@ func (p *pullRequestContent) IsNonCodeOnly() bool {
 
 	// if there are any changed files not in docs/man/experimental dirs
 	for _, f := range p.files {
-		if !strings.HasSuffix(f.FileName, ".md") &&
-			!strings.HasSuffix(f.FileName, ".txt") &&
-			!strings.HasPrefix(f.FileName, "docs") &&
-			!strings.HasPrefix(f.FileName, "man") &&
-			!strings.HasPrefix(f.FileName, "experimental") {
+		if !isMan(f.FileName) &&
+			!isDocumentation(f.FileName) &&
+			!isExperimental(f.FileName) &&
+			!isContrib(f.FileName) {
 			return false
 		}
 	}
@@ -153,9 +152,9 @@ func (p *pullRequestContent) OnlyFreebsd() bool {
 	var linux bool
 
 	for _, f := range p.files {
-		if strings.HasPrefix(f.FileName, "_freebsd.go") {
+		if strings.HasSuffix(f.FileName, "_freebsd.go") {
 			freebsd = true
-		} else if strings.HasPrefix(f.FileName, "_linux.go") {
+		} else if strings.HasSuffix(f.FileName, "_linux.go") {
 			linux = true
 		}
 	}
@@ -168,9 +167,9 @@ func (p *pullRequestContent) OnlyWindows() bool {
 	var linux bool
 
 	for _, f := range p.files {
-		if strings.HasPrefix(f.FileName, "_windows.go") {
+		if strings.HasSuffix(f.FileName, "_windows.go") {
 			windows = true
-		} else if strings.HasPrefix(f.FileName, "_linux.go") {
+		} else if strings.HasSuffix(f.FileName, "_linux.go") {
 			linux = true
 		}
 	}
@@ -213,18 +212,39 @@ func (g *GitHub) getContent(repo octokat.Repo, id int, isPR bool) (*pullRequestC
 	}, nil
 }
 
-func anyFolders(fileName string, folders ...string) bool {
-	for _, f := range folders {
-		if strings.HasPrefix(fileName, f) {
-			return true
-		}
-	}
-	return false
+func anyPackage(fileName string, packages ...string) bool {
+	return hasAny(strings.HasPrefix, fileName, packages...)
 }
 
-func anyPackage(fileName string, packages ...string) bool {
-	for _, p := range packages {
-		if strings.HasPrefix(fileName, p) {
+func isMan(filename string) bool {
+	return hasAny(strings.HasPrefix, filename, "man") &&
+		hasAny(strings.HasSuffix, filename, ".md", ".txt")
+}
+
+func isDocumentation(filename string) bool {
+	return hasAny(strings.HasPrefix, filename, "docs")
+}
+
+func isExperimental(filename string) bool {
+	return hasAny(strings.HasPrefix, filename, "experimental")
+}
+
+func isContrib(filename string) bool {
+	contribs := []string{
+		"contrib/completion",
+		"contrib/desktop-integration",
+		"contrib/mkimage",
+	}
+	return hasAny(strings.HasPrefix, filename, contribs...)
+}
+
+func isVendor(filename string) bool {
+	return hasAny(strings.HasPrefix, filename, "vendor", "hack/vendor.sh", "hack/.vendor-helper.sh")
+}
+
+func hasAny(fn func(string, string) bool, s string, cases ...string) bool {
+	for _, c := range cases {
+		if fn(s, c) {
 			return true
 		}
 	}

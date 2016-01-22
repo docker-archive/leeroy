@@ -33,6 +33,70 @@ func TestCommitsAreSigned(t *testing.T) {
 	}
 }
 
+func TestDistribution(t *testing.T) {
+	cases := []struct {
+		files []string
+		valid bool
+	}{
+		{[]string{""}, false},
+		{[]string{"file.md"}, false},
+		{[]string{"docs/file.txt"}, false},
+		{[]string{"graph/file.go"}, true},
+		{[]string{"registry/file.go"}, true},
+		{[]string{"image/file.go"}, true},
+		{[]string{"trust/file.go"}, true},
+		{[]string{"builder/file.go"}, true},
+		{[]string{"something/with/builder/file.go"}, false},
+	}
+
+	for _, c := range cases {
+		var files []*octokat.PullRequestFile
+		for _, f := range c.files {
+			files = append(files, &octokat.PullRequestFile{
+				FileName: f,
+			})
+		}
+
+		pr := &pullRequestContent{files: files}
+		s := pr.Distribution()
+
+		if s != c.valid {
+			t.Fatalf("expected %v, was %v, for: %s\n", c.valid, s, c.files)
+		}
+	}
+}
+
+func TestHasVendoringChanges(t *testing.T) {
+	cases := []struct {
+		files []string
+		valid bool
+	}{
+		{[]string{""}, false},
+		{[]string{"file.md"}, false},
+		{[]string{"docs/file.txt"}, false},
+		{[]string{"vendor/anything.really"}, true},
+		{[]string{"hack/vendor.sh"}, true},
+		{[]string{"hack/.vendor-helper.sh"}, true},
+		{[]string{"hack/.vendor-helper.sh", "daemon/daemon.go"}, true},
+	}
+
+	for _, c := range cases {
+		var files []*octokat.PullRequestFile
+		for _, f := range c.files {
+			files = append(files, &octokat.PullRequestFile{
+				FileName: f,
+			})
+		}
+
+		pr := &pullRequestContent{files: files}
+		s := pr.HasVendoringChanges()
+
+		if s != c.valid {
+			t.Fatalf("expected %v, was %v, for: %s\n", c.valid, s, c.files)
+		}
+	}
+}
+
 func TestHasDocsChanges(t *testing.T) {
 	cases := []struct {
 		files []string
@@ -60,6 +124,46 @@ func TestHasDocsChanges(t *testing.T) {
 
 		pr := &pullRequestContent{files: files}
 		s := pr.HasDocsChanges()
+
+		if s != c.valid {
+			t.Fatalf("expected %v, was %v, for: %s\n", c.valid, s, c.files)
+		}
+	}
+}
+
+func TestIsNonCodeOnly(t *testing.T) {
+	cases := []struct {
+		files []string
+		valid bool
+	}{
+		{[]string{""}, false},
+		{[]string{"file.md"}, false},
+		{[]string{"man/file.md"}, true},
+		{[]string{"man/file.txt"}, true},
+		{[]string{"docs/file.md"}, true},
+		{[]string{"man/file.sh"}, false},
+		{[]string{"docs/file.go"}, true},
+		{[]string{"docs/hub/file.md"}, true},
+		{[]string{"docs/hub/file.md", "man/file.txt"}, true},
+		{[]string{"experimental/file.md"}, true},
+		{[]string{"experimental/file.qo"}, true},
+		{[]string{"contrib/completion/zsh/_docker"}, true},
+		{[]string{"contrib/desktop-integration/README.md"}, true},
+		{[]string{"contrib/mkimage-alpine.sh"}, true},
+		{[]string{"docs/file.txt", "daemon/daemon.go"}, false},
+		{[]string{"daemon/daemon.go", "experimental/file.txt"}, false},
+	}
+
+	for _, c := range cases {
+		var files []*octokat.PullRequestFile
+		for _, f := range c.files {
+			files = append(files, &octokat.PullRequestFile{
+				FileName: f,
+			})
+		}
+
+		pr := &pullRequestContent{files: files}
+		s := pr.IsNonCodeOnly()
 
 		if s != c.valid {
 			t.Fatalf("expected %v, was %v, for: %s\n", c.valid, s, c.files)
