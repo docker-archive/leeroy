@@ -77,6 +77,25 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	// update the github status
 	if err := config.updateGithubStatus(j.Build.Parameters.GitBaseRepo, build.Context, j.Build.Parameters.GitSha, state, desc, j.Build.URL+"console"); err != nil {
 		logrus.Error(err)
+		return
+	}
+
+	// if the build failed return get the build logs
+	if state == "failure" {
+		// setup the jenkins client
+		jc := &config.Jenkins
+		log, err := jc.GetBuildLog(j.Name, j.Build.Number)
+		if err != nil {
+			logrus.Errorf("requesting log for job %s and build %d failed: %v", j.Name, j.Build.Number, err)
+			return
+		}
+
+		// add comment to the PR
+		if err := config.addGithubComment(j.Build.Parameters.GitBaseRepo, j.Build.Parameters.PR, log); err != nil {
+			logrus.Error(err)
+			return
+		}
+		logrus.Infof("added comment to %s#%s", j.Build.Parameters.GitBaseRepo, j.Build.Parameters.PR)
 	}
 
 	return
