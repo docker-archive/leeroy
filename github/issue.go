@@ -38,7 +38,7 @@ func (g GitHub) IssueInfoCheck(issueHook *octokat.IssueHook) error {
 	if !strings.Contains(body, "docker version") || !strings.Contains(body, "docker info") {
 		// get content
 		repo := nameWithOwner(issueHook.Repo)
-		content, err := g.getContent(repo, issueHook.Issue.Number, false)
+		content, err := g.GetContent(repo, issueHook.Issue.Number, false)
 		if err != nil {
 			return err
 		}

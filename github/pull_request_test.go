@@ -24,7 +24,7 @@ func TestCommitsAreSigned(t *testing.T) {
 			},
 		}
 
-		pr := &pullRequestContent{commits: commits}
+		pr := &PullRequestContent{commits: commits}
 		s := pr.CommitsSigned()
 
 		if s != valid {
@@ -57,7 +57,7 @@ func TestDistribution(t *testing.T) {
 			})
 		}
 
-		pr := &pullRequestContent{files: files}
+		pr := &PullRequestContent{files: files}
 		s := pr.Distribution()
 
 		if s != c.valid {
@@ -88,7 +88,7 @@ func TestHasVendoringChanges(t *testing.T) {
 			})
 		}
 
-		pr := &pullRequestContent{files: files}
+		pr := &PullRequestContent{files: files}
 		s := pr.HasVendoringChanges()
 
 		if s != c.valid {
@@ -122,7 +122,7 @@ func TestHasDocsChanges(t *testing.T) {
 			})
 		}
 
-		pr := &pullRequestContent{files: files}
+		pr := &PullRequestContent{files: files}
 		s := pr.HasDocsChanges()
 
 		if s != c.valid {
@@ -162,7 +162,7 @@ func TestIsNonCodeOnly(t *testing.T) {
 			})
 		}
 
-		pr := &pullRequestContent{files: files}
+		pr := &PullRequestContent{files: files}
 		s := pr.IsNonCodeOnly()
 
 		if s != c.valid {
@@ -209,7 +209,7 @@ func TestAlreadyCommented(t *testing.T) {
 			},
 		}
 
-		pr := &pullRequestContent{comments: comments}
+		pr := &PullRequestContent{comments: comments}
 		if done := pr.AlreadyCommented("sign your commits", "gordontheturtle"); done != c.exp {
 			t.Fatalf("Expected commented %v, but was %v for user %s and body %s\n", c.exp, done, c.login, c.body)
 		}

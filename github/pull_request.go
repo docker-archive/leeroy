@@ -17,7 +17,7 @@ var (
 type PullRequest struct {
 	Hook    *octokat.PullRequestHook
 	Repo    octokat.Repo
-	Content *pullRequestContent
+	Content *PullRequestContent
 	*octokat.PullRequest
 }
 
@@ -26,7 +26,7 @@ func (g GitHub) LoadPullRequest(hook *octokat.PullRequestHook) (*PullRequest, er
 	pr := hook.PullRequest
 	repo := nameWithOwner(hook.Repo)
 
-	content, err := g.getContent(repo, hook.Number, true)
+	content, err := g.GetContent(repo, hook.Number, true)
 	if err != nil {
 		return nil, err
 	}
@@ -44,14 +44,17 @@ func (pr PullRequest) ReleaseBase() bool {
 	return pr.Base.Ref == "release"
 }
 
-type pullRequestContent struct {
+// PullRequestContent contains the files, commits, and comments for a given
+// pull request
+type PullRequestContent struct {
 	id       int
 	files    []*octokat.PullRequestFile
 	commits  []octokat.Commit
 	comments []octokat.Comment
 }
 
-func (p *pullRequestContent) HasVendoringChanges() bool {
+// HasVendoringChanges checks for vendoring changes.
+func (p *PullRequestContent) HasVendoringChanges() bool {
 	if len(p.files) == 0 {
 		return false
 	}
@@ -66,7 +69,8 @@ func (p *pullRequestContent) HasVendoringChanges() bool {
 	return false
 }
 
-func (p *pullRequestContent) HasDocsChanges() bool {
+// HasDocsChanges checks for docs changes.
+func (p *PullRequestContent) HasDocsChanges() bool {
 	if len(p.files) == 0 {
 		return false
 	}
@@ -81,7 +85,8 @@ func (p *pullRequestContent) HasDocsChanges() bool {
 	return false
 }
 
-func (p *pullRequestContent) IsNonCodeOnly() bool {
+// IsNonCodeOnly chacks if only non code files are modified.
+func (p *PullRequestContent) IsNonCodeOnly() bool {
 	if len(p.files) == 0 {
 		return false
 	}
@@ -99,7 +104,8 @@ func (p *pullRequestContent) IsNonCodeOnly() bool {
 	return true
 }
 
-func (p *pullRequestContent) Distribution() bool {
+// Distribution checks if the changes are to distribution's directories.
+func (p *PullRequestContent) Distribution() bool {
 	if len(p.files) == 0 {
 		return false
 	}
@@ -113,7 +119,8 @@ func (p *pullRequestContent) Distribution() bool {
 	return false
 }
 
-func (p *pullRequestContent) CommitsSigned() bool {
+// CommitsSigned checks if the commits are signed.
+func (p *PullRequestContent) CommitsSigned() bool {
 	if len(p.commits) == 0 {
 		return true
 	}
@@ -127,7 +134,8 @@ func (p *pullRequestContent) CommitsSigned() bool {
 	return true
 }
 
-func (p *pullRequestContent) AlreadyCommented(commentType, user string) bool {
+// AlreadyCommented checks if the user has already commented.
+func (p *PullRequestContent) AlreadyCommented(commentType, user string) bool {
 	for _, c := range p.comments {
 		// if we already made the comment return nil
 		if strings.ToLower(c.User.Login) == user && strings.Contains(c.Body, commentType) {
@@ -138,7 +146,8 @@ func (p *pullRequestContent) AlreadyCommented(commentType, user string) bool {
 	return false
 }
 
-func (p *pullRequestContent) FindComment(commentType, user string) *octokat.Comment {
+// FindComment finds a specific comment.
+func (p *PullRequestContent) FindComment(commentType, user string) *octokat.Comment {
 	for _, c := range p.comments {
 		if strings.ToLower(c.User.Login) == user && strings.Contains(c.Body, commentType) {
 			return &c
@@ -147,7 +156,8 @@ func (p *pullRequestContent) FindComment(commentType, user string) *octokat.Comm
 	return nil
 }
 
-func (p *pullRequestContent) OnlyFreebsd() bool {
+// OnlyFreebsd checks if changes are only to freebsd specific files.
+func (p *PullRequestContent) OnlyFreebsd() bool {
 	var freebsd bool
 	var linux bool
 
@@ -162,7 +172,8 @@ func (p *pullRequestContent) OnlyFreebsd() bool {
 	return freebsd && !linux
 }
 
-func (p *pullRequestContent) OnlyWindows() bool {
+// OnlyWindows checks if whanges are only to windows specific files.
+func (p *PullRequestContent) OnlyWindows() bool {
 	var windows bool
 	var linux bool
 
@@ -177,7 +188,8 @@ func (p *pullRequestContent) OnlyWindows() bool {
 	return windows && !linux
 }
 
-func (g *GitHub) getContent(repo octokat.Repo, id int, isPR bool) (*pullRequestContent, error) {
+// GetContent returns the content of the issue/pull request number passed.
+func (g *GitHub) GetContent(repo octokat.Repo, id int, isPR bool) (*PullRequestContent, error) {
 	var (
 		files    []*octokat.PullRequestFile
 		commits  []octokat.Commit
@@ -204,7 +216,7 @@ func (g *GitHub) getContent(repo octokat.Repo, id int, isPR bool) (*pullRequestC
 		return nil, err
 	}
 
-	return &pullRequestContent{
+	return &PullRequestContent{
 		id:       id,
 		files:    files,
 		commits:  commits,

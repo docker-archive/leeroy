@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
@@ -77,6 +78,33 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	// update the github status
 	if err := config.updateGithubStatus(j.Build.Parameters.GitBaseRepo, build.Context, j.Build.Parameters.GitSha, state, desc, j.Build.URL+"console"); err != nil {
 		logrus.Error(err)
+		return
+	}
+
+	// if the build failed return get the build logs
+	if state == "failure" {
+		// setup the jenkins client
+		jc := &config.Jenkins
+		log, err := jc.GetBuildLog(j.Name, j.Build.Number)
+		if err != nil {
+			logrus.Errorf("requesting log for job %s and build %d failed: %v", j.Name, j.Build.Number, err)
+			return
+		}
+
+		// add comment to the PR
+		if err := config.addGithubComment(j.Build.Parameters.GitBaseRepo, j.Build.Parameters.PR, log); err != nil {
+			logrus.Error(err)
+			return
+		}
+		logrus.Infof("added comment to %s#%s", j.Build.Parameters.GitBaseRepo, j.Build.Parameters.PR)
+	}
+
+	if state == "success" {
+		// find the comments about failed builds and remove them
+		number, _ := strconv.Atoi(j.Build.Parameters.PR)
+		if err := config.removeFailedBuildComment(j.Build.Parameters.GitBaseRepo, j.Name, number); err != nil {
+			logrus.Error(err)
+		}
 	}
 
 	return
@@ -291,6 +319,7 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 
 	// schedule the jenkins builds
 	for _, build := range builds {
+		// schedule the build
 		if err := config.scheduleJenkinsBuild(baseRepo, pr.Number, build); err != nil {
 			logrus.Error(err)
 			w.WriteHeader(500)

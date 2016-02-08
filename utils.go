@@ -9,6 +9,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
+	"github.com/docker/leeroy/github"
 )
 
 // Commit describes information in a commit
@@ -55,6 +56,30 @@ func (c Config) getBuildByContextAndRepo(context, repo string) (build Build, err
 	}
 
 	return build, fmt.Errorf("Could not find config for context: %s, repo: %s", context, repo)
+}
+
+func (c Config) addGithubComment(repoName, pr, comment string) error {
+	// parse git repo for username
+	// and repo name
+	r := strings.SplitN(repoName, "/", 2)
+	if len(r) < 2 {
+		return fmt.Errorf("repo name could not be parsed: %s", repoName)
+	}
+
+	// initialize github client
+	gh := octokat.NewClient()
+	gh = gh.WithToken(c.GHToken)
+	repo := octokat.Repo{
+		Name:     r[1],
+		UserName: r[0],
+	}
+
+	// add comment to the PR
+	if _, err := gh.AddComment(repo, pr, comment); err != nil {
+		return fmt.Errorf("adding comment to %s#%s failed: %v", repoName, pr, err)
+	}
+
+	return nil
 }
 
 func (c Config) updateGithubStatus(repoName, context, sha, state, desc, buildURL string) error {
@@ -159,9 +184,22 @@ func (c Config) getShas(owner, name, context string, number int) (shas []string,
 }
 
 func (c Config) scheduleJenkinsBuild(baseRepo string, number int, build Build) error {
+	// setup the jenkins client
+	j := &config.Jenkins
+
 	// make sure we even want to build
 	if build.Job == "" {
 		return nil
+	}
+
+	// cancel any existing builds if we can, before sheduling another
+	if err := j.CancelBuildsForPR(build.Job, strconv.Itoa(number)); err != nil {
+		logrus.Warnf("Trying to cancel existing builds for job %s, pr %d failed: %v", build.Job, number, err)
+	}
+
+	// find the comments about failed builds and remove them
+	if err := config.removeFailedBuildComment(baseRepo, build.Job, number); err != nil {
+		logrus.Error(err)
 	}
 
 	// parse git repo for username
@@ -184,8 +222,6 @@ func (c Config) scheduleJenkinsBuild(baseRepo string, number int, build Build) e
 			return err
 		}
 
-		// setup the jenkins client
-		j := &c.Jenkins
 		// setup the parameters
 		htmlURL := fmt.Sprintf("https://github.com/%s/pull/%d", baseRepo, pr.Number)
 		headRepo := fmt.Sprintf("%s/%s", pr.Head.Repo.Owner.Login, pr.Head.Repo.Name)
@@ -233,4 +269,37 @@ func (c Config) getFailedPRs(context, repoName string) (nums []int, err error) {
 	}
 
 	return nums, nil
+}
+
+func (c Config) removeFailedBuildComment(repoName, job string, pr int) error {
+	// parse git repo for username
+	// and repo name
+	r := strings.SplitN(repoName, "/", 2)
+	if len(r) < 2 {
+		return fmt.Errorf("repo name could not be parsed: %s", repoName)
+	}
+
+	// initialize github client
+	g := github.GitHub{
+		AuthToken: c.GHToken,
+		User:      c.GHUser,
+	}
+	repo := octokat.Repo{
+		Name:     r[1],
+		UserName: r[0],
+	}
+
+	content, err := g.GetContent(repo, pr, true)
+	if err != nil {
+		return fmt.Errorf("getting pull request content failed: %v", err)
+	}
+
+	// find the comments about failed builds and remove them
+	if comment := content.FindComment(fmt.Sprintf("Job: %s [FAILED", job), c.GHUser); comment != nil {
+		if err := g.Client().RemoveComment(repo, comment.Id); err != nil {
+			return fmt.Errorf("removing comment from %s#%d for %s failed: %v", repoName, pr, job, err)
+		}
+	}
+
+	return nil
 }

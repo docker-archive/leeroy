@@ -8,7 +8,7 @@ import (
 	"github.com/crosbymichael/octokat"
 )
 
-func (g GitHub) addDCOUnsignedComment(repo octokat.Repo, pr *PullRequest, content *pullRequestContent) error {
+func (g GitHub) addDCOUnsignedComment(repo octokat.Repo, pr *PullRequest, content *PullRequestContent) error {
 	comment := `Please sign your commits following these rules:
 https://github.com/docker/docker/blob/master/CONTRIBUTING.md#sign-your-work
 The easiest way to do this is to amend the last commit:
@@ -36,7 +36,7 @@ Ammending updates the existing PR. You **DO NOT** need to open a new one.
 	return g.addUniqueComment(repo, strconv.Itoa(pr.Number), comment, "sign your commits", content)
 }
 
-func (g GitHub) addNeedMoreInfoComment(repo octokat.Repo, issueNum int, content *pullRequestContent) error {
+func (g GitHub) addNeedMoreInfoComment(repo octokat.Repo, issueNum int, content *PullRequestContent) error {
 	comment := `
 If you are reporting a new issue, make sure that we do not have any duplicates already open. You can ensure this by searching the issue list for this repository. If there is a duplicate, please close your issue and add a comment to the existing issue instead.
 
@@ -85,7 +85,7 @@ Provide additional info you think is important:
 	return g.addUniqueComment(repo, strconv.Itoa(issueNum), comment, "#ENEEDMOREINFO", content)
 }
 
-func (g GitHub) removeComment(repo octokat.Repo, commentType string, content *pullRequestContent) error {
+func (g GitHub) removeComment(repo octokat.Repo, commentType string, content *PullRequestContent) error {
 	if c := content.FindComment(commentType, g.User); c != nil {
 		return g.Client().RemoveComment(repo, c.Id)
 	}
@@ -93,7 +93,7 @@ func (g GitHub) removeComment(repo octokat.Repo, commentType string, content *pu
 	return nil
 }
 
-func (g GitHub) addUniqueComment(repo octokat.Repo, prNum, comment, commentType string, content *pullRequestContent) error {
+func (g GitHub) addUniqueComment(repo octokat.Repo, prNum, comment, commentType string, content *PullRequestContent) error {
 	// check if we already made the comment
 	if content.AlreadyCommented(commentType, g.User) {
 		return nil
