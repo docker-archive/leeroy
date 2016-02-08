@@ -9,6 +9,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
+	"github.com/docker/leeroy/github"
 )
 
 // Commit describes information in a commit
@@ -186,14 +187,19 @@ func (c Config) scheduleJenkinsBuild(baseRepo string, number int, build Build) e
 	// setup the jenkins client
 	j := &config.Jenkins
 
+	// make sure we even want to build
+	if build.Job == "" {
+		return nil
+	}
+
 	// cancel any existing builds if we can, before sheduling another
 	if err := j.CancelBuildsForPR(build.Job, strconv.Itoa(number)); err != nil {
 		logrus.Warnf("Trying to cancel existing builds for job %s, pr %d failed: %v", build.Job, number, err)
 	}
 
-	// make sure we even want to build
-	if build.Job == "" {
-		return nil
+	// find the comments about failed builds and remove them
+	if err := config.removeFailedBuildComment(baseRepo, build.Job, number); err != nil {
+		logrus.Error(err)
 	}
 
 	// parse git repo for username
@@ -263,4 +269,37 @@ func (c Config) getFailedPRs(context, repoName string) (nums []int, err error) {
 	}
 
 	return nums, nil
+}
+
+func (c Config) removeFailedBuildComment(repoName, job string, pr int) error {
+	// parse git repo for username
+	// and repo name
+	r := strings.SplitN(repoName, "/", 2)
+	if len(r) < 2 {
+		return fmt.Errorf("repo name could not be parsed: %s", repoName)
+	}
+
+	// initialize github client
+	g := github.GitHub{
+		AuthToken: c.GHToken,
+		User:      c.GHUser,
+	}
+	repo := octokat.Repo{
+		Name:     r[1],
+		UserName: r[0],
+	}
+
+	content, err := g.GetContent(repo, pr, true)
+	if err != nil {
+		return fmt.Errorf("getting pull request content failed: %v", err)
+	}
+
+	// find the comments about failed builds and remove them
+	if comment := content.FindComment(fmt.Sprintf("Job: %s [FAILED", job), c.GHUser); comment != nil {
+		if err := g.Client().RemoveComment(repo, comment.Id); err != nil {
+			return fmt.Errorf("removing comment from %s#%d for %s failed: %v", repoName, pr, job, err)
+		}
+	}
+
+	return nil
 }

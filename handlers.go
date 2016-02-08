@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
@@ -96,6 +97,14 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		logrus.Infof("added comment to %s#%s", j.Build.Parameters.GitBaseRepo, j.Build.Parameters.PR)
+	}
+
+	if state == "success" {
+		// find the comments about failed builds and remove them
+		number, _ := strconv.Atoi(j.Build.Parameters.PR)
+		if err := config.removeFailedBuildComment(j.Build.Parameters.GitBaseRepo, j.Name, number); err != nil {
+			logrus.Error(err)
+		}
 	}
 
 	return
@@ -310,6 +319,7 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 
 	// schedule the jenkins builds
 	for _, build := range builds {
+		// schedule the build
 		if err := config.scheduleJenkinsBuild(baseRepo, pr.Number, build); err != nil {
 			logrus.Error(err)
 			w.WriteHeader(500)
