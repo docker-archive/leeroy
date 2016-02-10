@@ -4,12 +4,15 @@ MAINTAINER Jessica Frazelle <jess@docker.com>
 EXPOSE 80
 ENV PATH /go/bin:/usr/local/go/bin:$PATH
 ENV GOPATH /go
+ENV GITHUB_CACHE_PATH /github_cache
 
 RUN	apk update && apk add \
 	ca-certificates \
 	&& rm -rf /var/cache/apk/*
 
 COPY . /go/src/github.com/docker/leeroy
+
+VOLUME /github_cache
 
 RUN buildDeps=' \
 		go \
