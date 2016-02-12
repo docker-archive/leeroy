@@ -47,49 +47,49 @@ type BuildParameters struct {
 
 // Request describes a request to jenkins
 type Request struct {
-	Parameters []map[string]string `json:"parameter"`
+	Parameters []map[string]string `json:"parameter,omitempty"`
 }
 
 // JobBuildsResponse describes a response for a job's builds.
 type JobBuildsResponse struct {
-	Builds []RecentBuild `json:"builds"`
+	Builds []RecentBuild `json:"builds,omitempty"`
 }
 
 // RecentBuild describes a build from the Jenkins API.
 type RecentBuild struct {
-	ID        string        `json:"id"`
-	Actions   []interface{} `json:"actions"`
-	Building  bool          `json:"building"`
-	Timestamp time.Time     `json:"timstamp"`
-	NodeName  string        `json:"builtOn"`
+	ID        string    `json:"id,omitempty"`
+	Actions   []Action  `json:"actions,omitempty"`
+	Building  bool      `json:"building,omitempty"`
+	Timestamp time.Time `json:"timstamp,omitempty"`
+	NodeName  string    `json:"builtOn,omitempty"`
 }
 
 // Action defines the action for a build.
 type Action struct {
-	Parameters []Parameter `json:"parameters"`
+	Parameters []Parameter `json:"parameters,omitempty"`
 }
 
 // Parameter defines the parameters for a build.
 type Parameter struct {
-	Name  string `json:"Name"`
-	Value string `json:"Value"`
+	Name  string `json:"name,omitempty"`
+	Value string `json:"value,omitempty"`
 }
 
 // QueuedBuildsResponse describes a response for a job's builds.
 type QueuedBuildsResponse struct {
-	Builds []QueuedBuild `json:"items"`
+	Builds []QueuedBuild `json:"items,omitempty"`
 }
 
 // QueuedBuild represents a build in the queue.
 type QueuedBuild struct {
-	ID      int           `json:"id"`
-	Actions []interface{} `json:"actions"`
-	Task    QueueTask     `json:"task"`
+	ID      int       `json:"id,omitempty"`
+	Actions []Action  `json:"actions,omitempty"`
+	Task    QueueTask `json:"task,omitempty"`
 }
 
 // QueueTask is a task associated with a build in the queue.
 type QueueTask struct {
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 }
 
 // New sets the authentication for the Jenkins client
@@ -224,7 +224,7 @@ func (c *Client) CancelBuild(job, id string, isQueued bool) error {
 
 	// check the status code
 	// it should be 201
-	if resp.StatusCode != 201 {
+	if resp.StatusCode != 201 && resp.StatusCode != 200 {
 		return fmt.Errorf("jenkins post to %s responded with status %d", url, resp.StatusCode)
 	}
 
@@ -239,8 +239,8 @@ func (c *Client) GetRunningBuildForPR(job, pr string) (*RecentBuild, error) {
 	}
 
 	for _, build := range builds {
-		if build.Building && len(build.Actions) > 0 {
-			if a, ok := build.Actions[0].(Action); ok {
+		if build.Building {
+			for _, a := range build.Actions {
 				for _, p := range a.Parameters {
 					if p.Name == "PR" && p.Value == pr {
 						return &build, nil
@@ -320,8 +320,8 @@ func (c *Client) GetQueuedBuildForPR(job, pr string) (*QueuedBuild, error) {
 
 	// loop through and collect only the ones that task name matches the job.
 	for _, build := range r.Builds {
-		if build.Task.Name == job && len(build.Actions) > 0 {
-			if a, ok := build.Actions[0].(Action); ok {
+		if build.Task.Name == job {
+			for _, a := range build.Actions {
 				for _, p := range a.Parameters {
 					if p.Name == "PR" && p.Value == pr {
 						return &build, nil
