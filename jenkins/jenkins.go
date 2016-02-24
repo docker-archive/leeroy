@@ -182,16 +182,18 @@ func (c *Client) CancelBuildsForPR(job, pr string) error {
 	}
 
 	// check running builds
-	b, err := c.GetRunningBuildForPR(job, pr)
-	if err != nil {
-		e += fmt.Sprintf("Getting running build for job %s, pr %s failed: %v;", job, pr, err)
-	} else if b != nil {
-		// if it is not nil then we found a matching build, cancel it
-		if err := c.CancelBuild(job, b.ID, false); err != nil {
-			e += fmt.Sprintf("cancelling running build for job %s, pr %s failed: %v;", job, pr, err)
+	/*
+		b, err := c.GetRunningBuildForPR(job, pr)
+		if err != nil {
+			e += fmt.Sprintf("Getting running build for job %s, pr %s failed: %v;", job, pr, err)
+		} else if b != nil {
+			// if it is not nil then we found a matching build, cancel it
+			if err := c.CancelBuild(job, b.ID, false); err != nil {
+				e += fmt.Sprintf("cancelling running build for job %s, pr %s failed: %v;", job, pr, err)
+			}
+			logrus.Infof("Cancelled running build (%s) for job %s, pr %s", b.ID, job, pr)
 		}
-		logrus.Infof("Cancelled running build (%s) for job %s, pr %s", b.ID, job, pr)
-	}
+	*/
 
 	if e != "" {
 		return errors.New(e)

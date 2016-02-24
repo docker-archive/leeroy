@@ -193,9 +193,11 @@ func (c Config) scheduleJenkinsBuild(baseRepo string, number int, build Build) e
 	}
 
 	// cancel any existing builds if we can, before sheduling another
-	if err := j.CancelBuildsForPR(build.Job, strconv.Itoa(number)); err != nil {
-		logrus.Warnf("Trying to cancel existing builds for job %s, pr %d failed: %v", build.Job, number, err)
-	}
+	/*
+		if err := j.CancelBuildsForPR(build.Job, strconv.Itoa(number)); err != nil {
+			logrus.Warnf("Trying to cancel existing builds for job %s, pr %d failed: %v", build.Job, number, err)
+		}
+	*/
 
 	// find the comments about failed builds and remove them
 	if err := config.removeFailedBuildComment(baseRepo, build.Job, number); err != nil {
@@ -216,7 +218,6 @@ func (c Config) scheduleJenkinsBuild(baseRepo string, number int, build Build) e
 	}
 
 	for _, sha := range shas {
-
 		// update the github status
 		if err := c.updateGithubStatus(baseRepo, build.Context, sha, "pending", "Jenkins build is being scheduled", c.Jenkins.Baseurl); err != nil {
 			return err
