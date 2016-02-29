@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -167,6 +168,10 @@ func (c *Client) BuildWithParameters(job string, parameters string) error {
 
 // CancelBuildsForPR cancels any queued or running builds for a PR.
 func (c *Client) CancelBuildsForPR(job, pr string) error {
+	if env := os.Getenv("LEEROY_KEEP_OLD_BUILD_RUNNING"); env != "" {
+		return errors.New("LEEROY_KEEP_OLD_BUILD_RUNNING is set")
+	}
+
 	var e string
 
 	// first check the queue
@@ -182,18 +187,16 @@ func (c *Client) CancelBuildsForPR(job, pr string) error {
 	}
 
 	// check running builds
-	/*
-		b, err := c.GetRunningBuildForPR(job, pr)
-		if err != nil {
-			e += fmt.Sprintf("Getting running build for job %s, pr %s failed: %v;", job, pr, err)
-		} else if b != nil {
-			// if it is not nil then we found a matching build, cancel it
-			if err := c.CancelBuild(job, b.ID, false); err != nil {
-				e += fmt.Sprintf("cancelling running build for job %s, pr %s failed: %v;", job, pr, err)
-			}
-			logrus.Infof("Cancelled running build (%s) for job %s, pr %s", b.ID, job, pr)
+	b, err := c.GetRunningBuildForPR(job, pr)
+	if err != nil {
+		e += fmt.Sprintf("Getting running build for job %s, pr %s failed: %v;", job, pr, err)
+	} else if b != nil {
+		// if it is not nil then we found a matching build, cancel it
+		if err := c.CancelBuild(job, b.ID, false); err != nil {
+			e += fmt.Sprintf("cancelling running build for job %s, pr %s failed: %v;", job, pr, err)
 		}
-	*/
+		logrus.Infof("Cancelled running build (%s) for job %s, pr %s", b.ID, job, pr)
+	}
 
 	if e != "" {
 		return errors.New(e)
