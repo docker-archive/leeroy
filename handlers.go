@@ -272,6 +272,12 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := g.CheckExecdriver(pullRequest); err != nil {
+		logrus.Errorf("Error checking execdriver: %v", err)
+		w.WriteHeader(500)
+		return
+	}
+
 	mergeable, err := g.IsMergeable(pullRequest)
 	if err != nil {
 		logrus.Errorf("Error checking if PR is mergeable: %v", err)
