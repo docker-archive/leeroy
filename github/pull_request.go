@@ -44,6 +44,21 @@ func (pr PullRequest) ReleaseBase() bool {
 	return pr.Base.Ref == "release"
 }
 
+// Execdriver checks if the changes are to execdriver's directories.
+func (pr *PullRequest) Execdriver() bool {
+	if len(pr.Content.files) == 0 || strings.Contains(strings.ToLower(pr.Title), "containerd") {
+		return false
+	}
+
+	for _, f := range pr.Content.files {
+		if anyPackage(f.FileName, "daemon/execdriver") {
+			return true
+		}
+	}
+
+	return false
+}
+
 // PullRequestContent contains the files, commits, and comments for a given
 // pull request
 type PullRequestContent struct {

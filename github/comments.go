@@ -36,6 +36,12 @@ Ammending updates the existing PR. You **DO NOT** need to open a new one.
 	return g.addUniqueComment(repo, strconv.Itoa(pr.Number), comment, "sign your commits", content)
 }
 
+func (g GitHub) addExecdriverDeprecationComment(repo octokat.Repo, pr *PullRequest, content *PullRequestContent) error {
+	comment := `Please note that concept of execdrivers is being replaced with OCI compliant binaries executed through containerd. There is an ongoing effort for switching to containerd in #20662 . Please consider porting the changes in your PR to this branch instead.`
+
+	return g.addUniqueComment(repo, strconv.Itoa(pr.Number), comment, "concept of execdrivers is being replaced with OCI compliant binaries", content)
+}
+
 func (g GitHub) addNeedMoreInfoComment(repo octokat.Repo, issueNum int, content *PullRequestContent) error {
 	comment := `
 If you are reporting a new issue, make sure that we do not have any duplicates already open. You can ensure this by searching the issue list for this repository. If there is a duplicate, please close your issue and add a comment to the existing issue instead.
