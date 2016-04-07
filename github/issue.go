@@ -22,37 +22,6 @@ The people listed below have upvoted this issue by leaving a +1 comment:
 `
 )
 
-// IssueInfoCheck makes sure an issue has the required information from the user
-func (g GitHub) IssueInfoCheck(issueHook *octokat.IssueHook) error {
-	body := strings.ToLower(issueHook.Issue.Body)
-	title := strings.ToLower(issueHook.Issue.Title)
-
-	// we don't care about proposals or features
-	if strings.Contains(title, "proposal") || strings.Contains(title, "feature") {
-		logrus.Debugf("Issue is talking about a proposal or feature so ignoring.")
-		return nil
-	}
-
-	// parse if they gave us
-	// docker info, docker version, uname -a
-	if !strings.Contains(body, "docker version") || !strings.Contains(body, "docker info") {
-		// get content
-		repo := nameWithOwner(issueHook.Repo)
-		content, err := g.GetContent(repo, issueHook.Issue.Number, false)
-		if err != nil {
-			return err
-		}
-
-		// comment on the issue
-		logrus.Debugf("commenting on issue %d about needing more info", issueHook.Issue.Number)
-		if err := g.addNeedMoreInfoComment(repo, issueHook.Issue.Number, content); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 // LabelIssueComment checks if someone has claimed dibs on this issue
 func (g GitHub) LabelIssueComment(issueHook *octokat.IssueHook) error {
 	if err := g.maybeClaimIssue(issueHook); err != nil {

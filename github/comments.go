@@ -42,55 +42,6 @@ func (g GitHub) addExecdriverDeprecationComment(repo octokat.Repo, pr *PullReque
 	return g.addUniqueComment(repo, strconv.Itoa(pr.Number), comment, "concept of execdrivers is being replaced with OCI compliant binaries", content)
 }
 
-func (g GitHub) addNeedMoreInfoComment(repo octokat.Repo, issueNum int, content *PullRequestContent) error {
-	comment := `
-If you are reporting a new issue, make sure that we do not have any duplicates already open. You can ensure this by searching the issue list for this repository. If there is a duplicate, please close your issue and add a comment to the existing issue instead.
-
-If you suspect your issue is a bug, please edit your issue description to include the BUG REPORT INFORMATION shown below. If you fail to provide this information within 7 days, we cannot debug your issue and will close it. We will, however, reopen it if you later provide the information.
-
-For more information about reporting issues, see [CONTRIBUTING.md](https://github.com/docker/docker/blob/master/CONTRIBUTING.md#reporting-other-issues).
-
-**You _don't_ have to include this information if this is a _feature request_**
-
-(This is an automated, informational response)
-
------------------------------
-BUG REPORT INFORMATION
------------------------------
-Use the commands below to provide key information from your environment:
-
-` + "`docker version`" + `:
-` + "`docker info`" + `:
-
-Provide additional environment details (AWS, VirtualBox, physical, etc.):
-
-
-
-List the steps to reproduce the issue:
-1.
-2.
-3.
-
-
-Describe the results you received:
-
-
-Describe the results you expected:
-
-
-Provide additional info you think is important:
-
-
-----------END REPORT ---------
-
-
-
-#ENEEDMOREINFO
-`
-
-	return g.addUniqueComment(repo, strconv.Itoa(issueNum), comment, "#ENEEDMOREINFO", content)
-}
-
 func (g GitHub) removeComment(repo octokat.Repo, commentType string, content *PullRequestContent) error {
 	if c := content.FindComment(commentType, g.User); c != nil {
 		return g.Client().RemoveComment(repo, c.Id)
