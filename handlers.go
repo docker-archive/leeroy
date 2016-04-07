@@ -176,20 +176,6 @@ func handleIssue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if the issue has just been opened
-	// parse if ENEEDMOREINFO
-	if issueHook.IsOpened() {
-		logrus.Debug("Issue is opened, checking if we have correct info")
-		if err := g.IssueInfoCheck(issueHook); err != nil {
-			logrus.Errorf("Error checking if issue opened needs more info: %v", err)
-			w.WriteHeader(500)
-			return
-		}
-
-		w.WriteHeader(200)
-		return
-	}
-
 	if issueHook.Issue.State != "open" {
 		return
 	}
