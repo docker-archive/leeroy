@@ -243,19 +243,21 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	valid, err := g.DcoVerified(pullRequest)
+	if config.CheckDCO {
+		valid, err := g.DcoVerified(pullRequest)
 
-	if err != nil {
-		logrus.Errorf("Error validating DCO: %v", err)
-		w.WriteHeader(500)
-		return
-	}
+		if err != nil {
+			logrus.Errorf("Error validating DCO: %v", err)
+			w.WriteHeader(500)
+			return
+		}
 
-	// DCO not valid, we don't start the build
-	if !valid {
-		logrus.Errorf("Invalid DCO for %s #%d. Aborting build", baseRepo, pr.Number)
-		w.WriteHeader(200)
-		return
+		// DCO not valid, we don't start the build
+		if !valid {
+			logrus.Errorf("Invalid DCO for %s #%d. Aborting build", baseRepo, pr.Number)
+			w.WriteHeader(200)
+			return
+		}
 	}
 
 	if err := g.CheckExecdriver(pullRequest); err != nil {

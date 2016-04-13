@@ -59,7 +59,10 @@ Below is a sample leeroy config file:
 
     // Basic Auth for endoints
     "user": "USER",
-    "pass": "PASS"
+    "pass": "PASS",
+
+    // Expects Developer's Certificate or Origin on commits (default value)
+    "check_dco": true
 }
 ```
 

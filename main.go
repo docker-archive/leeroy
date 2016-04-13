@@ -27,7 +27,7 @@ var (
 	debug      bool
 	version    bool
 
-	config Config
+	config Config = Config{CheckDCO: true}
 )
 
 // Config describes the leeroy config file
@@ -39,6 +39,7 @@ type Config struct {
 	Builds       []Build        `json:"builds"`
 	User         string         `json:"user"`
 	Pass         string         `json:"pass"`
+	CheckDCO     bool           `json:"check_dco"`
 }
 
 // Build describes the paramaters for a build
