@@ -243,7 +243,7 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	valid, err := g.DcoVerified(pullRequest)
+	valid, err := g.DcoVerified(pullRequest, config.DocSignCommitFailure)
 
 	if err != nil {
 		logrus.Errorf("Error validating DCO: %v", err)
@@ -264,7 +264,7 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mergeable, err := g.IsMergeable(pullRequest)
+	mergeable, err := g.IsMergeable(pullRequest, config.DocMergeableFailure)
 	if err != nil {
 		logrus.Errorf("Error checking if PR is mergeable: %v", err)
 		w.WriteHeader(500)

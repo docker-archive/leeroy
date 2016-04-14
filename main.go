@@ -32,13 +32,15 @@ var (
 
 // Config describes the leeroy config file
 type Config struct {
-	Jenkins      jenkins.Client `json:"jenkins"`
-	BuildCommits string         `json:"build_commits"`
-	GHToken      string         `json:"github_token"`
-	GHUser       string         `json:"github_user"`
-	Builds       []Build        `json:"builds"`
-	User         string         `json:"user"`
-	Pass         string         `json:"pass"`
+	Jenkins              jenkins.Client `json:"jenkins"`
+	BuildCommits         string         `json:"build_commits"`
+	GHToken              string         `json:"github_token"`
+	GHUser               string         `json:"github_user"`
+	Builds               []Build        `json:"builds"`
+	User                 string         `json:"user"`
+	Pass                 string         `json:"pass"`
+	DocSignCommitFailure string         `json:"doc_sign_commit_failure"`
+	DocMergeableFailure  string         `json:"doc_mergeable_failure"`
 }
 
 // Build describes the paramaters for a build
