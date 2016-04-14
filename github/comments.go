@@ -8,12 +8,13 @@ import (
 	"github.com/crosbymichael/octokat"
 )
 
-func (g GitHub) addDCOUnsignedComment(repo octokat.Repo, pr *PullRequest, content *PullRequestContent) error {
-	comment := `Please sign your commits following these rules:
-https://github.com/docker/docker/blob/master/CONTRIBUTING.md#sign-your-work
+func (g GitHub) addDCOUnsignedComment(repo octokat.Repo, pr *PullRequest, content *PullRequestContent, failureLink string) error {
+	comment := fmt.Sprintf(`Please sign your commits following these rules:
+%s
 The easiest way to do this is to amend the last commit:
 ~~~console
-`
+`, failureLink)
+
 	comment += fmt.Sprintf("$ git clone -b %q %s %s\n", pr.Head.Ref, pr.Head.Repo.SSHURL, "somewhere")
 	comment += "$ cd somewhere\n"
 

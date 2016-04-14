@@ -1,6 +1,7 @@
 package github
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/Sirupsen/logrus"
@@ -14,7 +15,9 @@ const (
 )
 
 // DcoVerified checks if the pull request has been properly signed
-func (g GitHub) DcoVerified(pr *PullRequest) (bool, error) {
+func (g GitHub) DcoVerified(pr *PullRequest, failureLink string) (bool, error) {
+	jobName := fmt.Sprintf("%s/dco-signed", pr.Repo.UserName)
+
 	// we only want the prs that are opened/synchronized
 	if !pr.Hook.IsOpened() && !pr.Hook.IsSynchronize() {
 		return false, nil
@@ -75,7 +78,7 @@ func (g GitHub) DcoVerified(pr *PullRequest) (bool, error) {
 			return false, err
 		}
 
-		if err := g.successStatus(pr.Repo, pr.Head.Sha, "docker/dco-signed", "All commits signed"); err != nil {
+		if err := g.successStatus(pr.Repo, pr.Head.Sha, jobName, "All commits signed"); err != nil {
 			return false, err
 		}
 
@@ -85,11 +88,11 @@ func (g GitHub) DcoVerified(pr *PullRequest) (bool, error) {
 			return false, err
 		}
 
-		if err := g.addDCOUnsignedComment(pr.Repo, pr, pr.Content); err != nil {
+		if err := g.addDCOUnsignedComment(pr.Repo, pr, pr.Content, failureLink); err != nil {
 			return false, err
 		}
 
-		if err := g.failureStatus(pr.Repo, pr.Head.Sha, "docker/dco-signed", "Some commits without signature", "https://github.com/docker/docker/blob/master/CONTRIBUTING.md#sign-your-work"); err != nil {
+		if err := g.failureStatus(pr.Repo, pr.Head.Sha, jobName, "Some commits without signature", failureLink); err != nil {
 			return false, err
 		}
 	}

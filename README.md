@@ -2,12 +2,12 @@
 
 [![Circle CI](https://circleci.com/gh/docker/leeroy.svg?style=svg)](https://circleci.com/gh/docker/leeroy)
 
-Leeroy is a Go application which integrates Jenkins with 
+Leeroy is a Go application which integrates Jenkins with
 GitHub pull requests.
-Leeroy uses [GitHub hooks](http://developer.github.com/v3/repos/hooks/) 
-to listen for pull request notifications and starts jobs on your Jenkins 
-server.  Using the Jenkins notification plugin, Leeroy updates the 
-pull request using GitHub's 
+Leeroy uses [GitHub hooks](http://developer.github.com/v3/repos/hooks/)
+to listen for pull request notifications and starts jobs on your Jenkins
+server.  Using the Jenkins notification plugin, Leeroy updates the
+pull request using GitHub's
 [status API](http://developer.github.com/v3/repos/statuses/)
 with pending, success, failure, or error statuses.
 
@@ -18,8 +18,8 @@ endpoint, DCO checking, issue labeling, etc.
 ### Configuration
 
 Leeroy needs to be configured to point to your GitHub repositories,
-to your Jenkins server and its jobs.  You will need to add a GitHub 
-webook pointing towards your leeroy instance at the endpoint 
+to your Jenkins server and its jobs.  You will need to add a GitHub
+webook pointing towards your leeroy instance at the endpoint
 `/notifications/github`. You will also need to configure your
 Jenkins jobs to pull the right repositories and commits.
 
@@ -45,6 +45,12 @@ Below is a sample leeroy config file:
 
     "github_token": "YOUR_GITHUB_TOKEN",
     "github_user":  "GITHUB_USER_FOR_ABOVE_TOKEN",
+
+	// set the doc url to link to on sign commits failure status
+	"doc_sign_commit_failure": "https://docs.my.special.place#sign",
+
+	// set the doc url to link to on unmergeable failure status
+	"doc_mergeable_failure": "https://docs.my.special.place#mergeable",
 
     // A list of dicts containing configuration for each GitHub repository &
     // Jenkins job pair you want to join together.

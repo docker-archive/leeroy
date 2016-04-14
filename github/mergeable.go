@@ -1,13 +1,14 @@
 package github
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/Sirupsen/logrus"
 )
 
 // IsMergeable makes sure the pull request can be merged
-func (g GitHub) IsMergeable(pr *PullRequest) (mergeable bool, err error) {
+func (g GitHub) IsMergeable(pr *PullRequest, failureLink string) (mergeable bool, err error) {
 	// assume the PR is mergable unless we specifically set to false
 	// because mergable true is equivalent to skip
 	mergeable = true
@@ -17,6 +18,7 @@ func (g GitHub) IsMergeable(pr *PullRequest) (mergeable bool, err error) {
 		return mergeable, nil
 	}
 
+	jobName := fmt.Sprintf("%s/is-mergable", pr.Repo.UserName)
 	commentType := "merge conflicts"
 	if !isMergeable(pr) {
 		mergeable = false
@@ -29,7 +31,7 @@ func (g GitHub) IsMergeable(pr *PullRequest) (mergeable bool, err error) {
 		}
 
 		// set the status
-		if err := g.failureStatus(pr.Repo, pr.Head.Sha, "docker/is-mergable", "This PR is not mergable, please fix conflicts.", "https://docs.docker.com/project/work-issue/"); err != nil {
+		if err := g.failureStatus(pr.Repo, pr.Head.Sha, jobName, "This PR is not mergable, please fix conflicts.", failureLink); err != nil {
 			return mergeable, err
 		}
 
