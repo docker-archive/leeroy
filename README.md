@@ -20,7 +20,7 @@ endpoint, DCO checking, issue labeling, etc.
 Leeroy needs to be configured to point to your GitHub repositories,
 to your Jenkins server and its jobs.  You will need to add a GitHub 
 webook pointing towards your leeroy instance at the endpoint 
-`/notifications/github`. You will also need to configure your
+`/notification/github`. You will also need to configure your
 Jenkins jobs to pull the right repositories and commits.
 
 #### Leeroy Configuration
