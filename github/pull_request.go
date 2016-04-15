@@ -39,7 +39,7 @@ func (g GitHub) LoadPullRequest(hook *octokat.PullRequestHook) (*PullRequest, er
 	}, nil
 }
 
-// ReleaseBase checks if the pull request is beinng merged into the release branch
+// ReleaseBase checks if the pull request is being merged into the release branch
 func (pr PullRequest) ReleaseBase() bool {
 	return pr.Base.Ref == "release"
 }
