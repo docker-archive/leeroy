@@ -2,6 +2,7 @@ package github
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -108,4 +109,17 @@ func (g GitHub) maybeOpinion(issueHook *octokat.IssueHook) error {
 	}
 
 	return nil
+}
+
+func (g GitHub) IssueAddVersionLabel(issueHook *octokat.IssueHook) error {
+	serverVersion := regexp.MustCompile(`Server:\s+Version:\s+(\d+\.\d+\.\d+)`)
+	versionSubmatch := serverVersion.FindStringSubmatch(issueHook.Issue.Body)
+	if len(versionSubmatch) < 2 {
+		return nil
+	}
+
+	// For a version `X.Y.Z`, add a label of the form `version/X.Y`.
+	version := versionSubmatch[1]
+	shortVersion := version[0:strings.LastIndex(version, ".")]
+	return g.addLabel(nameWithOwner(issueHook.Repo), issueHook.Issue.Number, "version/"+shortVersion)
 }

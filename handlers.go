@@ -191,6 +191,13 @@ func handleIssue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Try to label the issue with the version information it contains.
+	if err := g.IssueAddVersionLabel(issueHook); err != nil {
+		logrus.Errorf("Error applying version label to issue: %v", err)
+		w.WriteHeader(500)
+		return
+	}
+
 	// handle if it is an issue comment
 	// apply approproate labels
 	if err := g.LabelIssueComment(issueHook); err != nil {
