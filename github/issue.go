@@ -111,15 +111,31 @@ func (g GitHub) maybeOpinion(issueHook *octokat.IssueHook) error {
 	return nil
 }
 
+func labelFromVersion(version, suffix string) string {
+	switch suffix {
+	// Dev suffix is associated with a master build.
+	case "dev":
+		return "version/master"
+	// For a version `X.Y.Z`, add a label of the form `version/X.Y`.
+	case strings.HasPrefix(suffix, "cs"):
+		fallthrough
+	case strings.HasPrefix(suffix, "rc"):
+		fallthrough
+	case suffix == "":
+		return "version/" + version[0:strings.LastIndex(version, ".")]
+	// The default for unknown suffix is to consider the version unsupported.
+	default:
+		return "version/unsupported"
+	}
+}
+
 func (g GitHub) IssueAddVersionLabel(issueHook *octokat.IssueHook) error {
-	serverVersion := regexp.MustCompile(`Server:\s+Version:\s+(\d+\.\d+\.\d+)`)
+	serverVersion := regexp.MustCompile(`Server:\s+Version:\s+(\d+\.\d+\.\d+)-?(\S*)`)
 	versionSubmatch := serverVersion.FindStringSubmatch(issueHook.Issue.Body)
-	if len(versionSubmatch) < 2 {
+	if len(versionSubmatch) < 3 {
 		return nil
 	}
 
-	// For a version `X.Y.Z`, add a label of the form `version/X.Y`.
-	version := versionSubmatch[1]
-	shortVersion := version[0:strings.LastIndex(version, ".")]
-	return g.addLabel(nameWithOwner(issueHook.Repo), issueHook.Issue.Number, "version/"+shortVersion)
+	label := labelFromVersion(versionSubmatch[1], versionSubmatch[2])
+	return g.addLabel(nameWithOwner(issueHook.Repo), issueHook.Issue.Number, label)
 }
