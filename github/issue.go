@@ -112,9 +112,9 @@ func (g GitHub) maybeOpinion(issueHook *octokat.IssueHook) error {
 }
 
 func labelFromVersion(version, suffix string) string {
-	switch suffix {
+	switch {
 	// Dev suffix is associated with a master build.
-	case "dev":
+	case suffix == "dev":
 		return "version/master"
 	// For a version `X.Y.Z`, add a label of the form `version/X.Y`.
 	case strings.HasPrefix(suffix, "cs"):
