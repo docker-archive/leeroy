@@ -14,7 +14,7 @@ https://github.com/docker/docker/blob/master/CONTRIBUTING.md#sign-your-work
 The easiest way to do this is to amend the last commit:
 ~~~console
 `
-	comment += fmt.Sprintf("$ git clone -b %q %s %s\n", pr.Head.Ref, pr.Head.Repo.SSHURL, "somewhere")
+	comment += fmt.Sprintf("$ git clone -b %q %s %s\n", pr.Head.Ref, pr.Head.Repo.CloneURL, "somewhere")
 	comment += "$ cd somewhere\n"
 
 	if pr.Commits > 1 {
