@@ -97,14 +97,6 @@ func (g GitHub) DcoVerified(pr *PullRequest) (bool, error) {
 	return verified, nil
 }
 
-// CheckExecdriver checks if the pull request changes something in execdrivers
-func (g GitHub) CheckExecdriver(pr *PullRequest) error {
-	if pr.Execdriver() {
-		return g.addExecdriverDeprecationComment(pr.Repo, pr, pr.Content)
-	}
-	return g.removeComment(pr.Repo, "concept of execdrivers is being replaced with OCI compliant binaries", pr.Content)
-}
-
 func getRepo(repo *octokat.Repository) octokat.Repo {
 	return octokat.Repo{
 		Name:     repo.Name,
