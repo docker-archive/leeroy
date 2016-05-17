@@ -30,7 +30,7 @@ The easiest way to do this is to amend the last commit:
 	comment += "$ git push -f\n"
 	comment += `~~~
 
-Ammending updates the existing PR. You **DO NOT** need to open a new one.
+Amending updates the existing PR. You **DO NOT** need to open a new one.
 `
 
 	return g.addUniqueComment(repo, strconv.Itoa(pr.Number), comment, "sign your commits", content)
