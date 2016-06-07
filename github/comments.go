@@ -36,12 +36,6 @@ Amending updates the existing PR. You **DO NOT** need to open a new one.
 	return g.addUniqueComment(repo, strconv.Itoa(pr.Number), comment, "sign your commits", content)
 }
 
-func (g GitHub) addExecdriverDeprecationComment(repo octokat.Repo, pr *PullRequest, content *PullRequestContent) error {
-	comment := `Please note that concept of execdrivers is being replaced with OCI compliant binaries executed through containerd. There is an ongoing effort for switching to containerd in #20662 . Please consider porting the changes in your PR to this branch instead.`
-
-	return g.addUniqueComment(repo, strconv.Itoa(pr.Number), comment, "concept of execdrivers is being replaced with OCI compliant binaries", content)
-}
-
 func (g GitHub) removeComment(repo octokat.Repo, commentType string, content *PullRequestContent) error {
 	if c := content.FindComment(commentType, g.User); c != nil {
 		return g.Client().RemoveComment(repo, c.Id)
