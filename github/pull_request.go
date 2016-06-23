@@ -187,7 +187,7 @@ func (p *PullRequestContent) OnlyFreebsd() bool {
 	return freebsd && !linux
 }
 
-// OnlyWindows checks if whanges are only to windows specific files.
+// OnlyWindows checks if changes are only to windows specific files.
 func (p *PullRequestContent) OnlyWindows() bool {
 	var windows bool
 	var linux bool
@@ -201,6 +201,18 @@ func (p *PullRequestContent) OnlyWindows() bool {
 	}
 
 	return windows && !linux
+}
+
+// Protobuf checks if there are changes to protocol buffers definitions or
+// code generated from them.
+func (p *PullRequestContent) Protobuf() bool {
+	for _, f := range p.files {
+		if strings.HasSuffix(f.FileName, ".proto") || strings.HasSuffix(f.FileName, ".pb.go") {
+			return true
+		}
+	}
+
+	return false
 }
 
 // GetContent returns the content of the issue/pull request number passed.

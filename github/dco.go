@@ -11,6 +11,7 @@ const (
 	groupWindows      = "group/windows"
 	groupFreeBSD      = "group/freebsd"
 	groupDistribution = "group/distribution"
+	groupProtobuf     = "group/protobuf"
 )
 
 // DcoVerified checks if the pull request has been properly signed
@@ -46,6 +47,10 @@ func (g GitHub) DcoVerified(pr *PullRequest) (bool, error) {
 
 	if labelOs(pr, "freebsd", pr.Content.OnlyFreebsd) {
 		labels = append(labels, groupFreeBSD)
+	}
+
+	if labelOs(pr, "protobuf", pr.Content.Protobuf) {
+		labels = append(labels, groupProtobuf)
 	}
 
 	if pr.Content.Distribution() {
