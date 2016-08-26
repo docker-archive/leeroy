@@ -48,6 +48,7 @@ type Build struct {
 	Context      string `json:"context"`
 	Custom       bool   `json:"custom"`
 	HandleIssues bool   `json:"handle_issues"`
+	IsPipeline   bool   `json:"is_pipeline"`
 }
 
 func init() {

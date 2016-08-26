@@ -20,9 +20,12 @@ type Commit struct {
 	URL         string `json:"url,omitempty"`
 }
 
-func (c Config) getBuilds(baseRepo string, isCustom bool) (builds []Build, err error) {
+func (c Config) getBuilds(baseRepo string, isCustom bool, includePipeline bool) (builds []Build, err error) {
 	for _, build := range c.Builds {
 		if build.Repo == baseRepo && isCustom == build.Custom {
+			if !includePipeline && build.IsPipeline {
+				continue
+			}
 			builds = append(builds, build)
 		}
 	}
@@ -128,7 +131,7 @@ func hasStatus(gh *octokat.Client, repo octokat.Repo, sha, context string) bool 
 	return false
 }
 
-func (c Config) getShas(owner, name, context string, number int) (shas []string, pr *octokat.PullRequest, err error) {
+func (c Config) getShas(owner, name, context string, number int, ref string) (shas []string, pr *octokat.PullRequest, err error) {
 	// initialize github client
 	gh := octokat.NewClient()
 	gh = gh.WithToken(c.GHToken)
@@ -138,9 +141,19 @@ func (c Config) getShas(owner, name, context string, number int) (shas []string,
 	}
 
 	// get the pull request so we can get the commits
-	pr, err = gh.PullRequest(repo, strconv.Itoa(number), &octokat.Options{})
-	if err != nil {
-		return shas, pr, fmt.Errorf("getting pull request %d for %s/%s failed: %v", number, owner, name, err)
+	if number != 0 {
+		pr, err = gh.PullRequest(repo, strconv.Itoa(number), &octokat.Options{})
+		if err != nil {
+			return shas, pr, fmt.Errorf("getting pull request %d for %s/%s failed: %v", number, owner, name, err)
+		}
+	}
+
+	if ref != "" {
+		commit, err := gh.Commit(repo, ref, &octokat.Options{})
+		if err != nil {
+			return shas, pr, fmt.Errorf("getting ref %s for %s/%s failed: %v", ref, owner, name, err)
+		}
+		shas = append(shas, commit.Sha)
 	}
 
 	// check which commits we want to get
@@ -174,7 +187,7 @@ func (c Config) getShas(owner, name, context string, number int) (shas []string,
 
 			shas = append(shas, commit.Sha)
 		}
-	} else {
+	} else if pr != nil {
 		// this is the case where buildCommits == "last"
 		// just get the sha of the pr
 		shas = append(shas, pr.Head.Sha)
@@ -183,7 +196,7 @@ func (c Config) getShas(owner, name, context string, number int) (shas []string,
 	return shas, pr, nil
 }
 
-func (c Config) scheduleJenkinsBuild(baseRepo string, number int, build Build) error {
+func (c Config) scheduleJenkinsBuild(baseRepo string, number int, ref string, build Build) error {
 	// setup the jenkins client
 	j := &config.Jenkins
 
@@ -210,25 +223,37 @@ func (c Config) scheduleJenkinsBuild(baseRepo string, number int, build Build) e
 	}
 
 	// get the shas to build
-	shas, pr, err := c.getShas(r[0], r[1], build.Context, number)
+	shas, pr, err := c.getShas(r[0], r[1], build.Context, number, ref)
 	if err != nil {
 		return err
 	}
 
 	for _, sha := range shas {
 
-		// update the github status
-		if err := c.updateGithubStatus(baseRepo, build.Context, sha, "pending", "Jenkins build is being scheduled", c.Jenkins.Baseurl); err != nil {
-			return err
-		}
-
-		// setup the parameters
-		htmlURL := fmt.Sprintf("https://github.com/%s/pull/%d", baseRepo, pr.Number)
-		headRepo := fmt.Sprintf("%s/%s", pr.Head.Repo.Owner.Login, pr.Head.Repo.Name)
-		parameters := fmt.Sprintf("GIT_BASE_REPO=%s&GIT_HEAD_REPO=%s&GIT_SHA1=%s&GITHUB_URL=%s&PR=%d&BASE_BRANCH=%s", baseRepo, headRepo, sha, htmlURL, pr.Number, pr.Base.Ref)
 		// schedule the build
-		if err := j.BuildWithParameters(build.Job, parameters); err != nil {
-			return fmt.Errorf("scheduling jenkins build failed: %v", err)
+		if build.IsPipeline {
+			// Pipeline builds set their own status and have their own queue per PR/branch.
+			prNumber := 0
+			if pr != nil {
+				prNumber = pr.Number
+				ref = pr.Base.Ref
+			}
+			if err := j.BuildPipeline(build.Job, prNumber, ref); err != nil {
+				return fmt.Errorf("scheduling jenkins pipeline build failed with: %v", err)
+			}
+		} else {
+			// update the github status
+			if err := c.updateGithubStatus(baseRepo, build.Context, sha, "pending", "Jenkins build is being scheduled", c.Jenkins.Baseurl); err != nil {
+				return err
+			}
+
+			// setup the parameters
+			htmlURL := fmt.Sprintf("https://github.com/%s/pull/%d", baseRepo, pr.Number)
+			headRepo := fmt.Sprintf("%s/%s", pr.Head.Repo.Owner.Login, pr.Head.Repo.Name)
+			parameters := fmt.Sprintf("GIT_BASE_REPO=%s&GIT_HEAD_REPO=%s&GIT_SHA1=%s&GITHUB_URL=%s&PR=%d&BASE_BRANCH=%s", baseRepo, headRepo, sha, htmlURL, pr.Number, pr.Base.Ref)
+			if err := j.BuildWithParameters(build.Job, parameters); err != nil {
+				return fmt.Errorf("scheduling jenkins build failed: %v", err)
+			}
 		}
 	}
 
