@@ -7,13 +7,6 @@ import (
 	"github.com/crosbymichael/octokat"
 )
 
-const (
-	groupWindows      = "group/windows"
-	groupFreeBSD      = "group/freebsd"
-	groupDistribution = "group/distribution"
-	groupProtobuf     = "group/protobuf"
-)
-
 // DcoVerified checks if the pull request has been properly signed
 func (g GitHub) DcoVerified(pr *PullRequest) (bool, error) {
 	// we only want the prs that are opened/synchronized
@@ -39,22 +32,6 @@ func (g GitHub) DcoVerified(pr *PullRequest) (bool, error) {
 		labels = []string{"status/3-docs-review"}
 	default:
 		labels = []string{"status/0-triage"}
-	}
-
-	if labelOs(pr, "windows", pr.Content.OnlyWindows) {
-		labels = append(labels, groupWindows)
-	}
-
-	if labelOs(pr, "freebsd", pr.Content.OnlyFreebsd) {
-		labels = append(labels, groupFreeBSD)
-	}
-
-	if labelOs(pr, "protobuf", pr.Content.Protobuf) {
-		labels = append(labels, groupProtobuf)
-	}
-
-	if pr.Content.Distribution() {
-		labels = append(labels, groupDistribution)
 	}
 
 	// add labels if there are any
