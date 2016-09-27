@@ -129,6 +129,7 @@ func labelFromVersion(version, suffix string) string {
 	}
 }
 
+// IssueAddVersionLabel adds a version label to an issue if it matches the regex
 func (g GitHub) IssueAddVersionLabel(issueHook *octokat.IssueHook) error {
 	serverVersion := regexp.MustCompile(`Server:\s+Version:\s+(\d+\.\d+\.\d+)-?(\S*)`)
 	versionSubmatch := serverVersion.FindStringSubmatch(issueHook.Issue.Body)
