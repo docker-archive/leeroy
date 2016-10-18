@@ -166,6 +166,33 @@ func (c *Client) BuildWithParameters(job string, parameters string) error {
 	return nil
 }
 
+// BuildPipeline is just BuildWithParameters but for a Pipeline job instead.
+func (c *Client) BuildPipeline(job string, prNumber int, prRef string) error {
+	subJobName := prRef
+	if prNumber != 0 {
+		subJobName = fmt.Sprintf("PR-%d", prNumber)
+	}
+	url := fmt.Sprintf("%s/job/%s/job/%s/build", c.Baseurl, job, subJobName)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte{}))
+	if err != nil {
+		return err
+	}
+
+	req.SetBasicAuth(c.Username, c.Token)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 201 {
+		return fmt.Errorf("jenkins post to %s responded with status %d", url, resp.StatusCode)
+	}
+
+	return nil
+}
+
 // CancelBuildsForPR cancels any queued or running builds for a PR.
 func (c *Client) CancelBuildsForPR(job, pr string) error {
 	if env := os.Getenv("LEEROY_KEEP_OLD_BUILD_RUNNING"); env != "" {

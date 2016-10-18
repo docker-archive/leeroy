@@ -282,9 +282,9 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 	var builds []Build
 	// Only run full jobs if there are code related changes
 	if !pullRequest.Content.IsNonCodeOnly() {
-		// get the builds
+		// get the builds -- skip pipeline jobs though, they'll be scheduled automatically
 		var err error
-		builds, err = config.getBuilds(baseRepo, false)
+		builds, err = config.getBuilds(baseRepo, false, false)
 		if err != nil {
 			logrus.Warn(err)
 		}
@@ -313,7 +313,7 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 	// schedule the jenkins builds
 	for _, build := range builds {
 		// schedule the build
-		if err := config.scheduleJenkinsBuild(baseRepo, pr.Number, build); err != nil {
+		if err := config.scheduleJenkinsBuild(baseRepo, pr.Number, "", build); err != nil {
 			logrus.Error(err)
 			w.WriteHeader(500)
 		}
@@ -326,6 +326,7 @@ type requestBuild struct {
 	Number  int    `json:"number"`
 	Repo    string `json:"repo"`
 	Context string `json:"context"`
+	Ref     string `json:"ref"`
 }
 
 func customBuildHandler(w http.ResponseWriter, r *http.Request) {
@@ -361,7 +362,7 @@ func customBuildHandler(w http.ResponseWriter, r *http.Request) {
 	)
 	if b.Context == "all" || b.Context == "" {
 		// get all the builds
-		builds, err = config.getBuilds(b.Repo, false)
+		builds, err = config.getBuilds(b.Repo, false, true)
 		if err != nil {
 			logrus.Error(err)
 			w.WriteHeader(500)
@@ -381,7 +382,7 @@ func customBuildHandler(w http.ResponseWriter, r *http.Request) {
 
 	// schedule the jenkins builds
 	for _, build := range builds {
-		if err := config.scheduleJenkinsBuild(b.Repo, b.Number, build); err != nil {
+		if err := config.scheduleJenkinsBuild(b.Repo, b.Number, b.Ref, build); err != nil {
 			logrus.Error(err)
 			w.WriteHeader(500)
 		}
@@ -436,7 +437,7 @@ func cronBuildHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, prNum := range nums {
 		// schedule the jenkins build
-		if err := config.scheduleJenkinsBuild(b.Repo, prNum, build); err != nil {
+		if err := config.scheduleJenkinsBuild(b.Repo, prNum, "", build); err != nil {
 			logrus.Error(err)
 		}
 	}
