@@ -12,7 +12,10 @@
 	[Org."Core maintainers"]
 		people = [
 			"calavera",
-			"jfrazelle",
+			"icecrime",
+			"jessfraz",
+			"thajeztah",
+			"vdemeester",
 		]
 
 [people]
@@ -27,7 +30,27 @@
 	Email = "david.calavera@gmail.com"
 	GitHub = "calavera"
 
-	[people.jfrazelle]
+	[People.icecrime]
+	Name = "Arnaud Porterie"
+	Email = "arnaud@docker.com"
+	GitHub = "icecrime"
+
+	[people.jessfraz]
 	Name = "Jessie Frazelle"
-	Email = "acidburn@docker.com"
-	GitHub = "jfrazelle"
+	Email = "jess@linux.com"
+	GitHub = "jessfraz"
+
+	[People.thajeztah]
+	Name = "Sebastiaan van Stijn"
+	Email = "github@gone.nl"
+	GitHub = "thaJeztah"
+
+	[People.thajeztah]
+	Name = "Sebastiaan van Stijn"
+	Email = "github@gone.nl"
+	GitHub = "thaJeztah"
+
+	[People.vdemeester]
+	Name = "Vincent Demeester"
+	Email = "vincent@sbr.pm"
+	GitHub = "vdemeester"
