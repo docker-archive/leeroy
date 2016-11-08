@@ -118,12 +118,12 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 		logrus.Error("Got GitHub notification without a type")
 	case "ping":
 		w.WriteHeader(200)
-	case "issues", "issue_comment":
-		handleIssue(w, r)
+	//case "issues", "issue_comment":
+	//	handleIssue(w, r)
 	case "pull_request":
 		handlePullRequest(w, r)
-	case "pull_request_review_comment":
-		handlePullRequestReviewComment(w, r)
+	//case "pull_request_review_comment":
+	//	handlePullRequestReviewComment(w, r)
 	default:
 		logrus.Errorf("Got unknown GitHub notification event type: %s", event)
 	}
@@ -247,21 +247,6 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logrus.Errorf("Error loading the pull request: %v", err)
 		w.WriteHeader(500)
-		return
-	}
-
-	valid, err := g.DcoVerified(pullRequest)
-
-	if err != nil {
-		logrus.Errorf("Error validating DCO: %v", err)
-		w.WriteHeader(500)
-		return
-	}
-
-	// DCO not valid, we don't start the build
-	if !valid {
-		logrus.Errorf("Invalid DCO for %s #%d. Aborting build", baseRepo, pr.Number)
-		w.WriteHeader(200)
 		return
 	}
 
