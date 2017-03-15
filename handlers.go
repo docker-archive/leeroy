@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
 	"github.com/docker/leeroy/github"
 	"github.com/docker/leeroy/jenkins"
+	"github.com/pkg/errors"
 )
 
 func pingHandler(w http.ResponseWriter, r *http.Request) {
@@ -243,9 +245,18 @@ func handlePullRequest(w http.ResponseWriter, r *http.Request) {
 		User:      config.GHUser,
 	}
 
+	attempt, totalAttempts := 1, 5
+	delay := time.Second
+retry:
 	pullRequest, err := g.LoadPullRequest(prHook)
 	if err != nil {
-		logrus.Errorf("Error loading the pull request: %v", err)
+		logrus.Errorf("Error loading the pull request (attempt %d/%d): %v", attempt, totalAttempts, err)
+		if attempt <= totalAttempts && errors.Cause(err).Error() == "Not Found" {
+			time.Sleep(delay)
+			attempt++
+			delay *= 2
+			goto retry
+		}
 		w.WriteHeader(500)
 		return
 	}
