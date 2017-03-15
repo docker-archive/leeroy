@@ -7,6 +7,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -231,16 +232,16 @@ func (g *GitHub) GetContent(repo octokat.Repo, id int, isPR bool) (*PullRequestC
 
 	if isPR {
 		if commits, err = g.Client().Commits(repo, n, options); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "commits")
 		}
 
 		if files, err = g.Client().PullRequestFiles(repo, n, options); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "files")
 		}
 	}
 
 	if comments, err = g.Client().Comments(repo, n, options); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "comments")
 	}
 
 	return &PullRequestContent{
