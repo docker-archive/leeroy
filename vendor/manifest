@@ -1,0 +1,45 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/Sirupsen/logrus",
+			"repository": "https://github.com/Sirupsen/logrus",
+			"vcs": "git",
+			"revision": "7e6f9765803ea8356f45fd9b3c62305fb36cca51",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/crosbymichael/octokat",
+			"repository": "https://github.com/crosbymichael/octokat",
+			"vcs": "git",
+			"revision": "dea6d22fe9758677f9f6d56c62a91269705a241f",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/google/btree",
+			"repository": "https://github.com/google/btree",
+			"vcs": "git",
+			"revision": "f06e229e679911bb31a04e07ac891115822e37c3",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/gregjones/httpcache",
+			"repository": "https://github.com/gregjones/httpcache",
+			"vcs": "git",
+			"revision": "4b02602f71f4346dfbd3ef8f4d15cc2a318b32c1",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/peterbourgon/diskv",
+			"repository": "https://github.com/peterbourgon/diskv",
+			"vcs": "git",
+			"revision": "5dfcb07a075adbaaa4094cddfd160b1e1c77a043",
+			"branch": "master",
+			"notests": true
+		}
+	]
+}
